@@ -1,0 +1,19 @@
+{
+    "domain_config": {
+        "S": 4,
+        "L": "0.5*(3 + np.sqrt(2))*S",
+        "N": 32
+    },
+    "quadrature_config": {
+        "N_g": 30,
+        "N_sigma": 32,
+        "method": "spherical_design",
+        "sigma": "./collision/sphere_design/ss005.00012.txt",
+        "N_theta": 12,
+        "N_phi": 16
+    },
+    "physical_config": {
+        "gamma": 1,
+        "e": 1
+    }
+}

@@ -1,0 +1,15 @@
+name: kipack
+dependencies:
+  - numpy
+  - scipy
+  - matplotlib
+  - tqdm
+  - ipykernel
+  - ipywidgets
+  - flake8
+  - black
+  - pip
+  - pip:
+    - cupy-cuda101
+    - pyfftw
+    - clawpack
