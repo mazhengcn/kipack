@@ -28,38 +28,32 @@ class BaseCollision(object, metaclass=ABCMeta):
         self._built_gpu = False
         self._input_shape = None
 
-    def __call__(self, input_f, heat_bath=None, method="fsm", device="cpu"):
-        if method == "fsm":
-            if device == "cpu":
-                if not self._built_cpu or input_f.shape != self._input_shape:
-                    # Broadcast kernels and build
-                    self._build_cpu(input_f.shape)
-                # Select cpu
-                self._set_to_cpu()
-                # Collide
-                output = self.collide(input_f)
-                if heat_bath:
-                    output += heat_bath * self.laplacian(input_f)
-            elif device == "gpu":
-                if not self._built_gpu or input_f.shape != self._input_shape:
-                    # Broadcast kernels and build
-                    self._build_gpu(input_f.shape)
-                # Select cpu
-                self._set_to_gpu()
-                # Copy input to gpu
-                gpu_f = cp.asarray(input_f)
-                # Collide
-                output = self.collide(gpu_f)
-                if heat_bath:
-                    output += heat_bath * self.laplacian(gpu_f)
-                # Copy back to cpu
-                output = output.get()
-        elif method == "rbm":
+    def __call__(self, input_f, heat_bath=None, device="cpu"):
+
+        if device == "cpu":
+            if not self._built_cpu or input_f.shape != self._input_shape:
+                # Broadcast kernels and build
+                self._build_cpu(input_f.shape)
+            # Select cpu
+            self._set_to_cpu()
+            # Collide
             output = self.collide(input_f)
             if heat_bath:
-                output += heat_bath
-        else:
-            raise NotImplementedError("Method is not implemented!")
+                output += heat_bath * self.laplacian(input_f)
+        elif device == "gpu":
+            if not self._built_gpu or input_f.shape != self._input_shape:
+                # Broadcast kernels and build
+                self._build_gpu(input_f.shape)
+            # Select cpu
+            self._set_to_gpu()
+            # Copy input to gpu
+            gpu_f = cp.asarray(input_f)
+            # Collide
+            output = self.collide(gpu_f)
+            if heat_bath:
+                output += heat_bath * self.laplacian(gpu_f)
+            # Copy back to cpu
+            output = output.get()
 
         return output
 

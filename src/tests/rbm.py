@@ -8,6 +8,8 @@ from tqdm.notebook import tnrange
 import collision
 import pykinetic
 
+from collision.rbm_particle import RandomBatchCollision
+
 rkcoeff = {
     "RK3": {
         "a": np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0], [-1.0, 2.0, 0.0]]),
@@ -29,26 +31,29 @@ rkcoeff = {
 }
 
 
-def run(kn=1, tau=0.1, dt=0.01, nt=1000, coll="fsm", scheme="Euler"):
-    with open("./configs/vhs_2d.json") as f:
+def run(kn=1, dt=0.01, nt=1000, eps=(1, 1), coll="fsm", scheme="Euler"):
+    with open("./tests/configs/rbm.json") as f:
         config = json.load(f)
 
     vmesh = collision.VMesh(config)
     if coll == "fsm":
         coll_op = collision.FSInelasticVHSCollision(config, vmesh)
+
+        def coll(x):
+            return coll_op(x, device="gpu")
+
     elif coll == "rbm":
-        coll_op = collision.RandomBatchCollision(config, vmesh)
+        coll_op = RandomBatchCollision(config, vmesh)
+        a, b = eps
+        coll_op.eps = a * vmesh.delta ** b
+
+        def coll(x):
+            return coll_op(x, device="gpu")
+
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)
         )
-
-    tau = tau * kn
-
-    print(tau)
-
-    def coll(x):
-        return coll_op(x, heat_bath=tau, device="gpu")
 
     solver = pykinetic.BoltzmannSolver0D(kn=kn, collision_operator=coll)
     if "RK" in scheme:
@@ -67,23 +72,22 @@ def run(kn=1, tau=0.1, dt=0.01, nt=1000, coll="fsm", scheme="Euler"):
 
     sol = pykinetic.Solution(state, domain)
     sol_frames = []
-    T_frames = []
+    macro_frames = []
     for _ in tnrange(nt):
         solver.evolve_to_time(sol)
-        # l2_err = (
-        #     np.sqrt(np.sum((sol.q - bkw_fn(vmesh, sol.t)) ** 2))
-        # * vmesh.delta
-        # )
-        # sol_frames.append([copy.deepcopy(sol), l2_err])
-        T_frames.append(vmesh.get_p(sol.q)[-1])
-        sol_frames.append(copy.deepcopy(sol))
+        l2_err = (
+            np.sqrt(np.sum((sol.q - bkw_fn(vmesh, sol.t)) ** 2)) * vmesh.delta
+        )
+        sol_frames.append([copy.deepcopy(sol), l2_err])
+        macro_frames.append(vmesh.get_p(sol.q))
+        # sol_frames.append(copy.deepcopy(sol))
 
-    return T_frames, sol_frames, vmesh, coll, solver
+    return macro_frames, sol_frames, vmesh.delta
 
 
 def qinit(state, vmesh):
 
-    state.q[:] = flat(vmesh, 8.0)
+    state.q[:] = bkw_fn(vmesh, 0)
 
 
 def bkw_fn(vmesh, t):
@@ -107,16 +111,6 @@ def ext_Q(vmesh, t):
         2 * math.pi * K ** 2
     ) * np.exp(-vsq / (2 * K)) * (2 - vsq / (2 * K ** 2))
     return df * dK
-
-
-def ext_T(t, e, kn, tau, rho0, T0):
-    # exact evolution of temperature
-    # assume u0 = 0
-    t = t / kn
-    tau = tau * kn
-    return (T0 - 8 * tau / (1 - e ** 2)) * np.exp(
-        -(1 - e ** 2) * t * rho0 / 4
-    ) + 8 * tau / (1 - e ** 2)
 
 
 def flat(vmesh, T0):
