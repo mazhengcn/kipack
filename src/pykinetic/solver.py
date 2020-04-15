@@ -17,7 +17,7 @@ class CFLError(Exception):
        reasonable mechanism for handling that?"""
 
     def __init__(self, msg):
-        super(CFLError, self).__init__(msg)
+        super().__init__(msg)
 
 
 class BC:
@@ -213,7 +213,7 @@ class Solver(object):
 
         self._isinitialized = True
 
-        super(Solver, self).__init__()
+        super().__init__()
 
     def __setattr__(self, key, value):
         if not hasattr(self, "_isinitialized"):

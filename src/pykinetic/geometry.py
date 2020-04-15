@@ -164,7 +164,7 @@ class Grid(object):
         for dim in dimensions:
             self.add_dimension(dim)
 
-        super(Grid, self).__init__()
+        super().__init__()
 
     def __getattr__(self, key):
         # Provide dimension attribute lists when requested from Grid object.
@@ -735,7 +735,7 @@ class Patch(object):
 
         self.grid = Grid(dimensions)
 
-        super(Patch, self).__init__()
+        super().__init__()
 
     def add_dimension(self, dimension):
         r"""

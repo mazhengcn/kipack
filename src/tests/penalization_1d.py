@@ -7,27 +7,76 @@ from tqdm.notebook import tnrange
 
 import collision
 import pykinetic
-from .euler_1d import Euler1D
 from pykinetic import riemann
 
+from .euler_1d import Euler1D
 
-class PenalizationSolver1D(pykinetic.BoltzmannSolver0D):
-    def __init__(
-        self, kn, penalty, riemann_solver=None, collision_operator=None
-    ):
-        self.kn = kn
-        self.p = penalty
-        super(PenalizationSolver1D).__init__(
-            riemann_solver, collision_operator
-        )
+
+def maxwellian(v, rho, u, T):
+    if isinstance(rho, np.ndarray):
+        v = np.asarray(v)
+        u = np.asarray(u)
+        xdim = rho.ndim
+        vdim = v.shape[0]
+        v_dim = np.index_exp[:] + xdim * (np.newaxis,)
+        v = v[v_dim]
+
+        q_dim = (...,) + vdim * (np.newaxis,)
+        rho, u, T = rho[q_dim], u[q_dim], T[q_dim]
+        v_u = np.sum((v - u) ** 2, axis=0)
+
+    return rho / (2 * math.pi * T) ** (vdim / 2) * np.exp(-(v_u ** 2) / 2 / T)
+
+
+class PenalizationSolver1D(pykinetic.BoltzmannSolver1D):
+    def __init__(self, riemann_solver=None, collision_operator=None, **kwargs):
+
+        self.p = kwargs.get("penalty", 0.0)
+
+        super().__init__(riemann_solver, collision_operator, **kwargs)
+
+    # def dqdt(self, state):
+    #     r"""
+    #     Evaluate dq/dt*(delta t).  This routine is used for implicit time
+    #     stepping.
+    #     """
+    #     pdt_kn = 1.0 - self.dt * self.p / self.kn
+    #     dqdt = self.dq_collision(state) / pdt_kn
+    #     state.q += dqdt
+    #     dqdt = self.dq_hyperbolic(state)
+    #     return dqdt
+
+    def dpdt(self, state):
+        v = state.problem_data["v"]
+        macros = self.coll.get_p(state.q)
+        m_n = maxwellian(v, *macros)
+        T_next = (
+            1 - self.dt * (1 - self.coll.e ** 2) / 4 / self.kn * macros[0] ** 2
+        ) * macros[-1]
+        macros[-1] = T_next
+        m_next = maxwellian(v, *macros)
+        dp = m_next - m_n
+
+        return dp
 
     def dqdt(self, state):
-        r"""
-        Evaluate dq/dt*(delta t).  This routine is used for implicit time
-        stepping.
-        """
-        kndt = self.dt / (self.kn + self.p * self.dt)
-        dqdt = kndt * self.dq_collision(state)
+        v = state.problem_data["v"]
+        macros = self.coll.get_p(state.q)
+        m_n = maxwellian(v, *macros)
+        T_next = (
+            1 - self.dt * (1 - self.coll.e ** 2) / 4 / self.kn * macros[0] ** 2
+        ) * macros[-1]
+        macros[-1] = T_next
+        m_next = maxwellian(v, *macros)
+        dm = m_next - m_n
+
+        pdt_kn = 1.0 + self.dt * self.p / self.kn
+        dqdt = (
+            self.dq_collision(state) + self.dt * self.p * dm / self.kn
+        ) / pdt_kn
+        state.q += dqdt
+        dqdt = self.dq_hyperbolic(state)
+
         return dqdt
 
 
@@ -52,7 +101,7 @@ rkcoeff = {
 }
 
 
-def run(dt=0.001, nt=100, scheme="Euler"):
+def run(kn=1e-4, tau=None, p=5.0, dt=0.001, nt=100, scheme="Euler"):
     with open("./configs/vhs_2d.json") as f:
         config = json.load(f)
 
@@ -60,17 +109,15 @@ def run(dt=0.001, nt=100, scheme="Euler"):
     rp = riemann.advection_1D
     coll_op = collision.FSInelasticVHSCollision(config, vmesh)
 
-    # tau = None
-
-    def coll(x):
-        return coll_op(x, device="gpu")
-
     if scheme == "BEuler":
-        solver = pykinetic.PenalizationSolver1D(1e-3, 10, rp, coll)
+        solver = PenalizationSolver1D(
+            rp, coll_op, penalty=p, kn=kn, heat_bath=tau, device="gpu"
+        )
         solver.time_integrator = "BEuler"
     else:
-        solver = pykinetic.BoltzmannSolver1D(1e-4, rp, coll)
-        solver.dt = dt
+        solver = pykinetic.BoltzmannSolver1D(
+            rp, coll_op, kn=kn, heat_bath=tau, device="gpu"
+        )
         if "RK" in scheme:
             solver.time_integrator = "RK"
             solver.a = rkcoeff[scheme]["a"]
@@ -78,9 +125,9 @@ def run(dt=0.001, nt=100, scheme="Euler"):
             solver.c = rkcoeff[scheme]["c"]
         else:
             solver.time_integrator = scheme
-
+    solver.dt = dt
     print("dt is {}".format(solver.dt))
-    # solver.order = 1
+    # solver.order = 2
     solver.lim_type = 2
     solver.bc_lower[0] = pykinetic.BC.periodic
     solver.bc_upper[0] = pykinetic.BC.periodic
@@ -88,7 +135,7 @@ def run(dt=0.001, nt=100, scheme="Euler"):
     x = pykinetic.Dimension(0.0, 1.0, 100, name="x")
     domain = pykinetic.Domain([x])
     state = pykinetic.State(domain, vdof=vmesh.nv_s)
-    state.problem_data["vx"] = vmesh.v_centers[0]
+    state.problem_data["v"] = vmesh.v_centers
     qinit(state, vmesh)
     sol = pykinetic.Solution(state, domain)
 
@@ -117,10 +164,10 @@ def run(dt=0.001, nt=100, scheme="Euler"):
 def qinit(state, vmesh):
     x = state.grid.x.centers
     rho = 1.0 + 0.5 * np.cos(4 * math.pi * x)
-    state.q[:] = maxwellian_vec(vmesh, 0.0, 1.0, rho)
+    state.q[:] = maxwellian_vec_init(vmesh, 0.0, 1.0, rho)
 
 
-def maxwellian_vec(vmesh, u, T, rho):
+def maxwellian_vec_init(vmesh, u, T, rho):
     v = vmesh.v_center
     return (
         rho[:, None, None]
@@ -166,7 +213,7 @@ def flat(vmesh, T0):
     return 1 / 4 / w ** 2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
 
 
-def maxwellian(vmesh, K):
+def maxwellian_init(vmesh, K):
     return 1 / (2 * math.pi * K) * np.exp(-0.5 * vmesh.vsq / K)
 
 

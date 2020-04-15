@@ -188,9 +188,7 @@ class BoltzmannSolver(Solver):
         self.lmm_cond = True
 
         # Call general initialization function
-        super(BoltzmannSolver, self).__init__(
-            riemann_solver, collision_operator
-        )
+        super().__init__(riemann_solver, collision_operator)
 
     def setup(self, solution):
         """
@@ -260,7 +258,7 @@ class BoltzmannSolver(Solver):
         state = solution.states[0]
         self._allocate_bc_arrays(state)
 
-        super(BoltzmannSolver, self).setup(solution)
+        super().setup(solution)
 
     # ========== Time stepping routines ======================================
     def step(self, solution, take_one_step, tstart, tend):
@@ -700,27 +698,43 @@ class BoltzmannSolver(Solver):
 
 
 class BoltzmannSolver0D(BoltzmannSolver):
-    def __init__(self, kn=1, riemann_solver=None, collision_operator=None):
-        self.kn = kn
+    def __init__(self, collision_operator=None, **kwargs):
+
+        self.kn = kwargs.get("kn", 1.0)
+        self.tau = kwargs.get("heat_bath", None)
+        self.device = kwargs.get("device", "gpu")
+
         self.num_dim = 0
-        super(BoltzmannSolver0D, self).__init__(
-            collision_operator=collision_operator
+
+        super().__init__(
+            riemann_solver=None, collision_operator=collision_operator
         )
 
     def dq_collision(self, state):
-        return self.coll(state.q) * self.dt / self.kn
+        return (
+            self.coll(state.q, heat_bath=self.tau, device=self.device)
+            * self.dt
+            / self.kn
+        )
 
 
 class BoltzmannSolver1D(BoltzmannSolver):
-    def __init__(self, kn=1, riemann_solver=None, collision_operator=None):
-        self.kn = kn
+    def __init__(self, riemann_solver=None, collision_operator=None, **kwargs):
+
+        self.kn = kwargs.get("kn", 1.0)
+        self.tau = kwargs.get("heat_bath", None)
+        self.device = kwargs.get("device", "gpu")
+
         self.num_dim = 1
-        super(BoltzmannSolver1D, self).__init__(
-            riemann_solver, collision_operator
-        )
+
+        super().__init__(riemann_solver, collision_operator)
 
     def dq_collision(self, state):
-        return self.coll(state.q) * self.dt / self.kn
+        return (
+            self.coll(state.q, heat_bath=self.tau, device=self.device)
+            * self.dt
+            / self.kn
+        )
 
     def dq_hyperbolic(self, state):
         r"""

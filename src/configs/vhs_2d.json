@@ -8,7 +8,7 @@
     },
     "collision-model": {
         "dim": 2,
-        "e": 1,
+        "e": 0.99999,
         "gamma": 0
     }
 }

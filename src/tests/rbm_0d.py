@@ -31,31 +31,23 @@ rkcoeff = {
 }
 
 
-def run(kn=1, dt=0.01, nt=1000, eps=(1, 1), coll="fsm", scheme="Euler"):
+def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
     with open("./tests/configs/rbm.json") as f:
         config = json.load(f)
 
     vmesh = collision.VMesh(config)
     if coll == "fsm":
         coll_op = collision.FSInelasticVHSCollision(config, vmesh)
-
-        def coll(x):
-            return coll_op(x, device="gpu")
-
     elif coll == "rbm":
         coll_op = RandomBatchCollision(config, vmesh)
         a, b = eps
         coll_op.eps = a * vmesh.delta ** b
-
-        def coll(x):
-            return coll_op(x, device="gpu")
-
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)
         )
 
-    solver = pykinetic.BoltzmannSolver0D(kn=kn, collision_operator=coll)
+    solver = pykinetic.BoltzmannSolver0D(collision_operator=coll_op, kn=kn)
     if "RK" in scheme:
         solver.time_integrator = "RK"
         solver.a = rkcoeff[scheme]["a"]

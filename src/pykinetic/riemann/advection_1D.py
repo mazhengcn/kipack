@@ -9,8 +9,8 @@ def advection_1D(q_l, q_r, aux_l, aux_r, problem_data):
 
     # wave shape: q.shape = (nx, nv, nv) (2D)
     wave = q_r - q_l
-    # s shape: v shape = (nv, nv) (2D)
-    s = problem_data["vx"]
+    # s shape: v shape = (2, nv, nv) (2D)
+    s = problem_data["v"][0]
     apdq = np.maximum(s, 0.0) * wave
     amdq = np.minimum(s, 0.0) * wave
 

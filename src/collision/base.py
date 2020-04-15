@@ -57,6 +57,14 @@ class BaseCollision(object, metaclass=ABCMeta):
 
         return output
 
+    # get primitive macroscopic quantities [rho, u, T]
+    def get_p(self, input_f):
+        return self.vm.get_p(input_f)
+
+    # get conserved macroscopic quantities [rho, m, E]
+    def get_F(self, input_f):
+        return self.vm.get_F(input_f)
+
     @abstractmethod
     def load_parameters(self):
         pass

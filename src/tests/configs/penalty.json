@@ -1,6 +1,6 @@
 {
     "velocity-mesh": {
-        "nv": 64,
+        "nv": 128,
         "s": 3.5
     },
     "circle-quad-rule": {
@@ -8,7 +8,7 @@
     },
     "collision-model": {
         "dim": 2,
-        "e": 1,
+        "e": 0.9,
         "gamma": 0
     }
 }

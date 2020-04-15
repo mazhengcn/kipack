@@ -143,7 +143,7 @@ class VMesh(object):
         m = [np.sum(f * v, axis=vaxis) * w for v in self.v_centers]
         E = 0.5 * np.sum(f * self.vsquare, axis=vaxis) * w
 
-        return rho, m, E
+        return [rho, m, E]
 
     def get_p(self, f):
         rho, m, E = self.get_F(f)
@@ -153,4 +153,4 @@ class VMesh(object):
             usq += ui ** 2
         T = (2 * E / rho - usq) / self.ndim
 
-        return rho, u, T
+        return [rho, u, T]

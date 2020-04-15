@@ -12,6 +12,10 @@ class FSInelasticVHSCollision(BaseCollision):
 
     collision_model = "vhs"
 
+    @property
+    def e(self):
+        return self._e
+
     def load_parameters(self):
         # Load collision model (e and gamma)
         collision_model = self.config["collision-model"]

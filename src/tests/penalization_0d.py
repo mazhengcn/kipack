@@ -1,28 +1,28 @@
+import copy
 import json
 import math
-import copy
-import numpy as np
 
+import numpy as np
 from tqdm.notebook import tnrange
+
 import collision
 import pykinetic
 
 
 class PenalizationSolver0D(pykinetic.BoltzmannSolver0D):
-    def __init__(self, kn, penalty, collision_operator):
-        self.kn = kn
-        self.p = penalty
-        super(PenalizationSolver0D, self).__init__(
-            kn, penalty, collision_operator
-        )
+    def __init__(self, collision_operator, **kwargs):
+
+        self.p = kwargs.get("penalty", 0.0)
+
+        super().__init__(collision_operator=collision_operator, **kwargs)
 
     def dqdt(self, state):
         r"""
         Evaluate dq/dt*(delta t).  This routine is used for implicit time
         stepping.
         """
-        kndt = self.dt / (self.kn + self.p * self.dt)
-        dqdt = kndt * self.dq_collision(state)
+        pdt_kn = 1.0 - self.dt * self.p / self.kn
+        dqdt = self.dq_collision(state) / pdt_kn
         return dqdt
 
 
@@ -47,8 +47,8 @@ rkcoeff = {
 }
 
 
-def run(kn=1, tau=0.1, p=5, dt=0.01, nt=1000, scheme="Euler"):
-    with open("./configs/vhs_2d.json") as f:
+def run(kn=1.0, tau=0.1, p=1.0, dt=0.01, nt=1000, scheme="Euler"):
+    with open("./tests/configs/penalty.json") as f:
         config = json.load(f)
 
     vmesh = collision.VMesh(config)
@@ -56,18 +56,17 @@ def run(kn=1, tau=0.1, p=5, dt=0.01, nt=1000, scheme="Euler"):
 
     tau = tau * kn
 
-    print(tau)
-
-    def coll(x):
-        return coll_op(x, heat_bath=tau, device="gpu")
+    print("tau is {}.".format(tau))
 
     if scheme == "BEuler":
         solver = PenalizationSolver0D(
-            kn=kn, penalty=p, collision_operator=coll
+            collision_operator=coll_op, penalty=p, kn=kn, heat_bath=tau
         )
         solver.time_integrator = "BEuler"
     else:
-        solver = pykinetic.BoltzmannSolver0D(kn=kn, collision_operator=coll)
+        solver = pykinetic.BoltzmannSolver0D(
+            collision_operator=coll_op, kn=kn, heat_bath=tau
+        )
         if "RK" in scheme:
             print("OK")
             solver.time_integrator = "RK"
@@ -88,20 +87,15 @@ def run(kn=1, tau=0.1, p=5, dt=0.01, nt=1000, scheme="Euler"):
     T_frames = []
     for _ in tnrange(nt):
         solver.evolve_to_time(sol)
-        # l2_err = (
-        #     np.sqrt(np.sum((sol.q - bkw_fn(vmesh, sol.t)) ** 2))
-        # * vmesh.delta
-        # )
-        # sol_frames.append([copy.deepcopy(sol), l2_err])
         T_frames.append(vmesh.get_p(sol.q)[-1])
         sol_frames.append(copy.deepcopy(sol))
 
-    return T_frames, sol_frames, vmesh, coll, solver
+    return T_frames, sol_frames, vmesh, coll_op, solver
 
 
 def qinit(state, vmesh):
 
-    state.q[:] = flat(vmesh, 8.0)
+    state.q[:] = bkw_fn(vmesh, 8.0)
 
 
 def bkw_fn(vmesh, t):
