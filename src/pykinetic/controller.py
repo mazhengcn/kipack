@@ -6,7 +6,7 @@ Controller for basic computation and plotting setup.
 This module defines the Pyclaw controller class.  It can be used to perform
 simulations in a convenient manner similar to that available in previous
 versions of Clawpack, i.e. with output_style and
-output time specification.  It also can be used to set up easy plotting and 
+output time specification.  It also can be used to set up easy plotting and
 running of compiled fortran binaries.
 """
 
@@ -15,7 +15,6 @@ from __future__ import absolute_import, print_function
 import copy
 import logging
 import os
-import sys
 
 from six.moves import range
 
@@ -32,13 +31,13 @@ class Controller(object):
 
     :Examples:
 
-        >>> import clawpack.pyclaw as pyclaw
-        >>> x = pyclaw.Dimension(0.,1.,100,name='x')
-        >>> domain = pyclaw.Domain((x))
-        >>> state = pyclaw.State(domain,3,2)
-        >>> claw = pyclaw.Controller()
-        >>> claw.solution = pyclaw.Solution(state,domain)
-        >>> claw.solver = pyclaw.ClawSolver1D()
+        >>> import pykinetic
+        >>> x = pykinetic.Dimension(0.,1.,100,name='x')
+        >>> domain = pykinetic.Domain((x))
+        >>> state = pykinetic.State(domain,3,2)
+        >>> claw = pykinetic.Controller()
+        >>> pykinetic.solution = pykinetic.Solution(state,domain)
+        >>> pykinetic.solver = pykinetic.BoltzmannSolver1D()
     """
 
     def __getattr__(self, key):
@@ -56,7 +55,6 @@ class Controller(object):
             "num_aux",
             "num_dim",
             "p_centers",
-            "p_edges",
             "c_centers",
             "num_cells",
             "lower",
@@ -64,7 +62,6 @@ class Controller(object):
             "delta",
             "centers",
             "gauges",
-            "num_aux",
             "grid",
         ):
             return self._get_solution_attribute(key)
@@ -138,32 +135,24 @@ class Controller(object):
             "output_style",
             "verbosity",
         ]
-        r"""(list) - Viewable attributes of the `:class:`~pyclaw.controller.Controller`"""
+        r"""(list) - Viewable attributes of
+        the `:class:`~pykinetic.controller.Controller`
+        """
 
         # Global information for running and/or plotting
         self.xdir = os.getcwd()
         r"""(string) - Executable path, executes xclawcmd in xdir"""
         self.rundir = os.getcwd()
-        r"""(string) - Directory to run from (containing \*.data files), uses 
+        r"""(string) - Directory to run from (containing \*.data files), uses
         \*.data from rundir"""
         self.outdir = os.getcwd() + "/_output"
         r"""(string) - Output directory, directs output files to outdir"""
         self.overwrite = True
-        r"""(bool) - Ok to overwrite old result in outdir, ``default = True``"""
-
-        self.xclawcmd = "xclaw"
-        r"""(string) - Command to execute (if using fortran), defaults to xclaw or
-        xclaw.exe if cygwin is being used (which it checks vis sys.platform)"""
-        if sys.platform == "cygwin":
-            self.xclawcmd = "xclaw.exe"
+        r"""(bool) - Ok to overwrite old result in outdir,
+        ``default = True``
+        """
 
         self.start_frame = 0
-        self.xclawout = None
-        r"""(string) - Where to write timestep messages"""
-        self.xclawerr = None
-        r"""(string) - Where to write error messages"""
-        self.runmake = False
-        r"""(bool) - Run make in xdir before xclawcmd"""
         self.savecode = False
         r"""(bool) - Save a copy of \*.f files in outdir"""
 
@@ -172,31 +161,33 @@ class Controller(object):
         # Solver information
         self.solution = None
         self.solver = None
-        r"""(:class:`~pyclaw.solver.Solver`) - Solver object"""
+        r"""(:class:`~pykinetic.solver.Solver`) - Solver object"""
 
         # Output parameters for run convenience method
         self.keep_copy = False
-        r"""(bool) - Keep a copy in memory of every output time, 
+        r"""(bool) - Keep a copy in memory of every output time,
         ``default = False``"""
         self.frames = []
-        r"""(list) - List of saved frames if ``keep_copy`` is set to ``True``"""
+        r"""(list) - List of saved frames if ``keep_copy`` is
+        set to ``True``
+        """
         self.write_aux_init = False
         r"""(bool) - Write out initial auxiliary array, ``default = False``"""
         self.write_aux_always = False
-        r"""(bool) - Write out auxiliary array at every time step, 
+        r"""(bool) - Write out auxiliary array at every time step,
         ``default = False``"""
         self.output_format = "ascii"
-        r"""(list of strings) - Format or list of formats to output the data, 
+        r"""(list of strings) - Format or list of formats to output the data,
         if this is None, no output is performed.  See _pyclaw_io for more info
         on available formats.  ``default = 'ascii'``"""
         self.output_file_prefix = None
-        r"""(string) - File prefix to be appended to output files, 
+        r"""(string) - File prefix to be appended to output files,
         ``default = None``"""
         self.output_options = {}
-        r"""(dict) - Output options passed to function writing and reading 
+        r"""(dict) - Output options passed to function writing and reading
         data in output_format's format.  ``default = {}``"""
 
-        self.logger = logging.getLogger("pyclaw.controller")
+        self.logger = logging.getLogger("pykinetic.controller")
 
         # Classic output parameters, used in run convenience method
         self.tfinal = 1.0
@@ -226,7 +217,8 @@ class Controller(object):
 
         # Derived quantity p
         self.file_prefix_p = "claw_p"
-        r"""(string) - File prefix to be prepended to derived quantity output files"""
+        r"""(string) - File prefix to be prepended to derived quantity output
+        files"""
         self.compute_p = None
         r"""(function) - function that computes derived quantities"""
 
@@ -278,14 +270,14 @@ class Controller(object):
             raise Exception("Initial states are not valid.")
 
     # ========== Plotting methods ============================================
-    def set_plotdata(self):
-        from clawpack.visclaw import data
-        from clawpack.visclaw import frametools
+    # def set_plotdata(self):
+    #     from clawpack.visclaw import data
+    #     from clawpack.visclaw import frametools
 
-        plotdata = data.ClawPlotData()
-        plotdata.setplot = self.setplot
-        self.plotdata = frametools.call_setplot(self.setplot, plotdata)
-        plotdata._mode = "iplotclaw"
+    #     plotdata = data.ClawPlotData()
+    #     plotdata.setplot = self.setplot
+    #     self.plotdata = frametools.call_setplot(self.setplot, plotdata)
+    #     plotdata._mode = "iplotclaw"
 
     def load_frame(self, frame_number):
         try:
@@ -310,7 +302,8 @@ class Controller(object):
         """Plot from memory."""
         if len(self.frames) == 0:  # No frames to plot
             print(
-                "No frames to plot.  Did you forget to run, or to set keep_copy=True?"
+                "No frames to plot.  Did you forget to run, or to set \
+                    keep_copy=True?"
             )
             return
 
@@ -388,7 +381,8 @@ class Controller(object):
             if os.path.exists(self.outdir) and self.overwrite is False:
                 raise Exception(
                     "Refusing to overwrite existing output data. \
-                 \nEither delete/move the directory or set controller.overwrite=True."
+                 \nEither delete/move the directory or set \
+                 controller.overwrite=True."
                 )
             if self.compute_p is not None:
                 self.compute_p(self.solution.state)
@@ -500,7 +494,8 @@ class OutputController(object):
     :Initialization:
 
         Input:
-            - *output_path* - (path) Path to output both for reading and writing.
+            - *output_path* - (path) Path to output both for reading and
+                writing.
             - *file_format* - (string) String indicating type of file format
               to be used.  Default is `ascii`.
 
