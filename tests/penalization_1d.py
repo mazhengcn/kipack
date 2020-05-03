@@ -5,9 +5,8 @@ import math
 import numpy as np
 from tqdm.notebook import tnrange
 
-import collision
-import pykinetic
-from pykinetic import riemann
+from kipack import collision
+from kipack import pykinetic
 
 from .euler_1d import Euler1D
 
@@ -106,7 +105,7 @@ def run(kn=1e-4, tau=None, p=5.0, dt=0.001, nt=100, scheme="Euler"):
         config = json.load(f)
 
     vmesh = collision.VMesh(config)
-    rp = riemann.advection_1D
+    rp = pykinetic.riemann.advection_1D
     coll_op = collision.FSInelasticVHSCollision(config, vmesh)
 
     if scheme == "BEuler":

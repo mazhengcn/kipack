@@ -5,10 +5,8 @@ import math
 import numpy as np
 from tqdm.notebook import tnrange
 
-import collision
-import pykinetic
-
-from collision.rbm_particle import RandomBatchCollision
+from kipack import collision
+from kipack import pykinetic
 
 rkcoeff = {
     "RK3": {
@@ -39,7 +37,7 @@ def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
     if coll == "fsm":
         coll_op = collision.FSInelasticVHSCollision(config, vmesh)
     elif coll == "rbm":
-        coll_op = RandomBatchCollision(config, vmesh)
+        coll_op = collision.RandomBatchCollision(config, vmesh)
         a, b = eps
         coll_op.eps = a * vmesh.delta ** b
     else:

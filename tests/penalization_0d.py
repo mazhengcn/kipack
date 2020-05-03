@@ -5,8 +5,8 @@ import math
 import numpy as np
 from tqdm.notebook import tnrange
 
-import collision
-import pykinetic
+from kipack import collision
+from kipack import pykinetic
 
 
 class PenalizationSolver0D(pykinetic.BoltzmannSolver0D):

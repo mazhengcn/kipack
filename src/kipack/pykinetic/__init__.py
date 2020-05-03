@@ -14,14 +14,8 @@ from kipack.pykinetic.boltzmann.solver import (  # noqa
 )
 from kipack.pykinetic.cfl import CFL  # noqa
 
-# from .controller import Controller
-from kipack.pykinetic.geometry import Dimension, Domain, Patch  # noqa
 
-# from .sharpclaw.solver import (
-#     SharpClawSolver1D,
-#     SharpClawSolver2D,
-#     SharpClawSolver3D,
-# )
+from kipack.pykinetic.geometry import Dimension, Domain, Patch  # noqa
 from kipack.pykinetic.solution import Solution  # noqa
 from kipack.pykinetic.solver import BC  # noqa
 from kipack.pykinetic.state import State  # noqa
