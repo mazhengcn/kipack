@@ -18,8 +18,8 @@ import os
 
 from six.moves import range
 
-from .solver import Solver
-from .utils import LOGGING_LEVELS, FrameCounter
+from kipack.pykinetic.solver import Solver
+from kipack.pykinetic.utils import LOGGING_LEVELS, FrameCounter
 
 
 class Controller(object):

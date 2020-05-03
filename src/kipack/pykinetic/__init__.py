@@ -7,22 +7,24 @@ import logging.config  # noqa
 import os  # noqa
 
 # Sub-packages
-from . import limiters  # noqa
-from .boltzmann.solver import BoltzmannSolver0D, BoltzmannSolver1D  # noqa
-from .cfl import CFL  # noqa
+from kipack.pykinetic import limiters  # noqa
+from kipack.pykinetic.boltzmann.solver import (  # noqa
+    BoltzmannSolver0D,  # noqa
+    BoltzmannSolver1D,  # noqa
+)
+from kipack.pykinetic.cfl import CFL  # noqa
 
 # from .controller import Controller
-from .geometry import Dimension, Domain, Patch  # noqa
-from .limiters import *  # noqa
+from kipack.pykinetic.geometry import Dimension, Domain, Patch  # noqa
 
 # from .sharpclaw.solver import (
 #     SharpClawSolver1D,
 #     SharpClawSolver2D,
 #     SharpClawSolver3D,
 # )
-from .solution import Solution  # noqa
-from .solver import BC  # noqa
-from .state import State  # noqa
+from kipack.pykinetic.solution import Solution  # noqa
+from kipack.pykinetic.solver import BC  # noqa
+from kipack.pykinetic.state import State  # noqa
 
 # from .tests.test_io import IOTest
 

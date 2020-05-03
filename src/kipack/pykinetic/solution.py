@@ -1,10 +1,10 @@
 from __future__ import absolute_import, print_function
 
+from kipack.pykinetic.geometry import Dimension, Domain, Patch
+from kipack.pykinetic.state import State
+
 # import logging
 # import os
-
-from .geometry import Dimension, Domain, Patch
-from .state import State
 
 
 # ============================================================================

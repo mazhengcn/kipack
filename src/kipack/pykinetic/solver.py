@@ -9,7 +9,7 @@ import numpy as np
 import six
 from six.moves import range
 
-from .cfl import CFL
+from kipack.pykinetic.cfl import CFL
 
 
 class CFLError(Exception):

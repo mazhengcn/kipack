@@ -1,0 +1,7 @@
+six
+numpy
+scipy
+matplotlib
+tqdm
+cupy-cuda101
+pyfftw

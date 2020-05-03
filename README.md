@@ -1,4 +1,4 @@
-# PyKinetic
+# kipack
 
 Pykinetic is a Python-based solver for kinetic equations that includes the algorithms
 of fast spectral method.  

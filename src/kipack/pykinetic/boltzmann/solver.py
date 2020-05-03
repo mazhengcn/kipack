@@ -4,8 +4,8 @@ from __future__ import absolute_import
 import numpy as np
 from six.moves import range
 
-from pykinetic.solver import Solver
-from pykinetic.limiters import tvd, recon
+from kipack.pykinetic.solver import Solver
+from kipack.pykinetic.limiters import tvd, recon
 
 # Reconstructor
 # from pykinetic.limiters import recon

@@ -143,7 +143,7 @@ class State(object):
 
     # ========== Class Methods ===============================================
     def __init__(self, geom, vdof, num_aux=0):
-        from pykinetic import geometry
+        from kipack.pykinetic import geometry
 
         if isinstance(geom, geometry.Patch):
             self.patch = geom
