@@ -18,10 +18,10 @@ class FSInelasticVHSCollision(BaseCollision):
 
     def load_parameters(self):
         # Load collision model (e and gamma)
-        collision_model = self.config["collision-model"]
-        self._e = float(collision_model.get("e", 1.0))
+        collision_model = self.config.collision_model
+        self._e = collision_model.e
         print("e: {}".format(self._e))
-        self._gamma = float(collision_model.get("gamma", 0.0))
+        self._gamma = collision_model.gamma
 
         # Compute prefactor and exponential factor
         L = self.vm.L

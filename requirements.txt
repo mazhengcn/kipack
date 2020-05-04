@@ -1,4 +1,7 @@
 six
+dataclasses
+typing
+pyyaml
 numpy
 scipy
 matplotlib

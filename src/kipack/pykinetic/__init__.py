@@ -1,7 +1,4 @@
 """Main pykinetic package"""
-
-from __future__ import absolute_import
-
 import logging
 import logging.config  # noqa
 import os  # noqa
@@ -55,16 +52,7 @@ __all__.extend(
 
 # from clawpack.pyclaw import plot
 
-__all__.extend(
-    [
-        "ClawSolver1D",
-        "ClawSolver2D",
-        "ClawSolver3D",
-        "SharpClawSolver1D",
-        "SharpClawSolver2D",
-        "SharpClawSolver3D",
-    ]
-)
+__all__.extend(["BoltzmannSolver0D", "BoltzmannSolver1D"])  # noqa
 
 
 # __all__.extend(limiters.__all__)

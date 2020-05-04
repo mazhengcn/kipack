@@ -1,5 +1,4 @@
 import copy
-import json
 import math
 
 import numpy as np
@@ -48,9 +47,9 @@ rkcoeff = {
 
 
 def run(kn=1.0, tau=0.1, p=1.0, dt=0.01, nt=1000, scheme="Euler"):
-    with open("./tests/configs/penalty.json") as f:
-        config = json.load(f)
-
+    config = collision.utils.CollisionConfig.from_json(
+        "./configs/penalty.json"
+    )
     vmesh = collision.VMesh(config)
     coll_op = collision.FSInelasticVHSCollision(config, vmesh)
 

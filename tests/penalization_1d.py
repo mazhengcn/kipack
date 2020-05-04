@@ -8,7 +8,7 @@ from tqdm.notebook import tnrange
 from kipack import collision
 from kipack import pykinetic
 
-from .euler_1d import Euler1D
+from euler_1d import Euler1D
 
 
 def maxwellian(v, rho, u, T):
@@ -101,9 +101,9 @@ rkcoeff = {
 
 
 def run(kn=1e-4, tau=None, p=5.0, dt=0.001, nt=100, scheme="Euler"):
-    with open("./configs/vhs_2d.json") as f:
-        config = json.load(f)
-
+    config = collision.utils.CollisionConfig.from_json(
+        "./configs/penalty.json"
+    )
     vmesh = collision.VMesh(config)
     rp = pykinetic.riemann.advection_1D
     coll_op = collision.FSInelasticVHSCollision(config, vmesh)

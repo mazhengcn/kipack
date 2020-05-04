@@ -9,9 +9,8 @@ class BaseCollision(object, metaclass=ABCMeta):
         # Load configuration
         self.config = config
         self.vm = velocity_mesh
-
         # Load dimension
-        self.ndim = int(config["collision-model"]["dim"])
+        self.ndim = self.config.collision_model.dim
         assert (
             self.ndim == self.vm.ndim
         ), "'spectral_mesh' has different \
