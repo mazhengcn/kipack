@@ -8,3 +8,4 @@ matplotlib
 tqdm
 cupy-cuda101
 pyfftw
+params-mz @ git+https://github.com/Mayuyu/params.git
