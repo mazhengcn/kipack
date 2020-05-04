@@ -1,10 +1,10 @@
 import dataclasses
 
-from kipack.params import Config
+from params import base_config
 
 
 @dataclasses.dataclass
-class VMeshConfig(Config):
+class VMeshConfig(base_config.Config):
     nv: int = 64
     s: float = 3.5
     quad_rule: str = "legendre"
@@ -18,7 +18,7 @@ class VMeshConfig(Config):
 
 
 @dataclasses.dataclass
-class CollisionModelConfig(Config):
+class CollisionModelConfig(base_config.Config):
     dim: int = 2
     model_type: str = "vhs"
     e: float = 1.0
@@ -26,7 +26,7 @@ class CollisionModelConfig(Config):
 
 
 @dataclasses.dataclass
-class CollisionConfig(Config):
+class CollisionConfig(base_config.Config):
     precision: str = "double"
     # mesh
     xlo: float = -15e-3

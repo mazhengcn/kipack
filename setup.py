@@ -52,6 +52,5 @@ setup(
     packages=find_packages(where="src"),
     package_data={project_name: ["*.txt"]},
     install_requires=install_requires,
-    dependency_links=dependency_links,
     python_requires=">=3.7",
 )
