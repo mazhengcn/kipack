@@ -1,5 +1,4 @@
 import copy
-import json
 import math
 
 import numpy as np
@@ -19,7 +18,7 @@ def maxwellian(v, rho, u, T):
         vdim = v.shape[0]
         v_dim = np.index_exp[:] + xdim * (np.newaxis,)
         v = v[v_dim]
-
+        # print("1")
         q_dim = (...,) + vdim * (np.newaxis,)
         rho, u, T = rho[q_dim], u[q_dim], T[q_dim]
         v_u = np.sum((v - u) ** 2, axis=0)
@@ -45,30 +44,39 @@ class PenalizationSolver1D(pykinetic.BoltzmannSolver1D):
     #     dqdt = self.dq_hyperbolic(state)
     #     return dqdt
 
-    def dpdt(self, state):
-        v = state.problem_data["v"]
-        macros = self.coll.get_p(state.q)
-        m_n = maxwellian(v, *macros)
-        T_next = (
-            1 - self.dt * (1 - self.coll.e ** 2) / 4 / self.kn * macros[0] ** 2
-        ) * macros[-1]
-        macros[-1] = T_next
-        m_next = maxwellian(v, *macros)
-        dp = m_next - m_n
+    # def dpdt(self, state):
+    #     v = state.problem_data["v"]
+    #     macros = self.coll.get_p(state.q)
+    #     m_n = maxwellian(v, *macros)
+    #     T_next = (
+    #         1 - self.dt * (1 - self.coll.e ** 2) / 4 / self.kn * macros[0] ** 2
+    #     ) * macros[-1]
+    #     macros[-1] = T_next
+    #     m_next = maxwellian(v, *macros)
+    #     dp = m_next - m_n
 
-        return dp
+    #     return dp
 
     def dqdt(self, state):
         v = state.problem_data["v"]
         macros = self.coll.get_p(state.q)
+        # print(v)
         m_n = maxwellian(v, *macros)
         T_next = (
-            1 - self.dt * (1 - self.coll.e ** 2) / 4 / self.kn * macros[0] ** 2
-        ) * macros[-1]
+            np.exp(
+                -self.dt
+                * (1 - self.coll.e ** 2)
+                / 4
+                / self.kn
+                * macros[0] ** 2
+            )
+            * macros[-1]
+        )
         macros[-1] = T_next
+        # print(T_next)
         m_next = maxwellian(v, *macros)
         dm = m_next - m_n
-
+        # print(2)
         pdt_kn = 1.0 + self.dt * self.p / self.kn
         dqdt = (
             self.dq_collision(state) + self.dt * self.p * dm / self.kn
@@ -138,9 +146,7 @@ def run(kn=1e-4, tau=None, p=5.0, dt=0.001, nt=100, scheme="Euler"):
     qinit(state, vmesh)
     sol = pykinetic.Solution(state, domain)
 
-    with open("./configs/config_1d_2d.json") as f:
-        domain_config = json.load(f)
-    euler = Euler1D(domain_config)
+    euler = Euler1D(tau)
     euler.set_initial(vmesh.get_p(sol.q)[0], 0, 1.0)
 
     sol_frames = []

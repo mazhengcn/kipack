@@ -5,6 +5,7 @@ import os  # noqa
 
 # Sub-packages
 from kipack.pykinetic import limiters  # noqa
+from kipack.pykinetic import riemann  # noqa
 from kipack.pykinetic.boltzmann.solver import (  # noqa
     BoltzmannSolver0D,  # noqa
     BoltzmannSolver1D,  # noqa

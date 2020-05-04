@@ -26,10 +26,7 @@ def dq_src(solver, state, dt, tau):
 
 
 class Euler1D(object):
-    def __init__(
-        self, domain_config, solver_type="sharpclaw", kernel_language="Python"
-    ):
-        tau = domain_config["tau"]
+    def __init__(self, tau, solver_type="sharpclaw", kernel_language="Python"):
 
         if kernel_language == "Python":
             rs = riemann.euler_1D_py.euler_hllc_1D
@@ -47,8 +44,8 @@ class Euler1D(object):
         solver.bc_lower[0] = pyclaw.BC.periodic
         solver.bc_upper[0] = pyclaw.BC.periodic
 
-        nx = domain_config["nx"]
-        xmin, xmax = domain_config["xmin"], domain_config["xmax"]
+        nx = 100
+        xmin, xmax = 0.0, 1.0
         x = pyclaw.Dimension(xmin, xmax, nx, name="x")
         domain = pyclaw.Domain([x])
 
