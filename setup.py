@@ -4,7 +4,7 @@ from io import open
 
 from setuptools import find_packages, setup
 
-version = "0.0.1"
+version = "0.0.2"
 
 project_name = "kipack"
 
@@ -51,7 +51,6 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     package_data={project_name: ["*.txt"]},
-    exclude_package_data={"": ["*_test.py",],},  # noqa
     install_requires=install_requires,
     dependency_links=dependency_links,
     python_requires=">=3.7",
