@@ -1,4 +1,4 @@
-name: kipack
+name: kipack-dev
 dependencies:
   - numpy
   - scipy
@@ -10,6 +10,9 @@ dependencies:
   - black
   - pip
   - pip:
-    - cupy-cuda101
-    - pyfftw
-    - clawpack
+      - cupy-cuda101
+      - pyfftw
+      # For config file
+      - params-mz @ git+https://github.com/Mayuyu/params.git
+      # For tests
+      - clawpack
