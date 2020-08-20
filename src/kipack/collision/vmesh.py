@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from .spherical_design import get_sphrquadrule
+from kipack.collision.spherical_design import get_sphrquadrule
 
 
 class VMesh(object):

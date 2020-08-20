@@ -1,18 +1,14 @@
-name: kipack-dev
+name: kipack
+channels:
+  - conda-forge
+  - defaults
 dependencies:
   - numpy
   - scipy
   - matplotlib
-  - tqdm
-  - ipykernel
-  - ipywidgets
-  - flake8
-  - black
   - pip
   - pip:
-      - cupy-cuda101
+      - cupy-cuda102
       - pyfftw
       # For config file
       - params-mz @ git+https://github.com/Mayuyu/params.git
-      # For tests
-      - clawpack

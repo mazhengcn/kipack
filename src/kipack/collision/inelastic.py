@@ -5,7 +5,7 @@ import numpy as np
 import pyfftw
 from scipy import special
 
-from .base import BaseCollision
+from kipack.collision.base import BaseCollision
 
 
 class FSInelasticVHSCollision(BaseCollision):

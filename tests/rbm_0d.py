@@ -1,5 +1,4 @@
 import copy
-import json
 import math
 
 import numpy as np
@@ -30,14 +29,15 @@ rkcoeff = {
 
 
 def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
-    with open("./tests/configs/rbm.json") as f:
-        config = json.load(f)
+    config = collision.utils.CollisionConfig.from_json(
+        "./configs/" + coll + ".json"
+    )
 
     vmesh = collision.VMesh(config)
     if coll == "fsm":
         coll_op = collision.FSInelasticVHSCollision(config, vmesh)
     elif coll == "rbm":
-        coll_op = collision.RandomBatchCollision(config, vmesh)
+        coll_op = collision.RandomBatchCollisionV2(config, vmesh)
         a, b = eps
         coll_op.eps = a * vmesh.delta ** b
     else:

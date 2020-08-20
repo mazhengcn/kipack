@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from clawpack import pyclaw, riemann
 from clawpack.riemann.euler_with_efix_1D_constants import (
@@ -6,6 +8,9 @@ from clawpack.riemann.euler_with_efix_1D_constants import (
     momentum,
     num_eqn,
 )
+
+logger = logging.getLogger("pyclaw")
+logger.setLevel(logging.CRITICAL)
 
 # Ratio of specific heats
 gamma = 2.0
@@ -28,17 +33,19 @@ def dq_src(solver, state, dt, tau):
 class Euler1D(object):
     def __init__(self, tau, solver_type="sharpclaw", kernel_language="Python"):
 
+        rs = None
         if kernel_language == "Python":
             rs = riemann.euler_1D_py.euler_hllc_1D
         elif kernel_language == "Fortran":
             rs = riemann.euler_with_efix_1D
 
+        solver = None
         if solver_type == "sharpclaw":
             solver = pyclaw.SharpClawSolver1D(rs)
-            solver.dq_src = lambda x, y, z: dq_src(x, y, z, tau)
+            # solver.dq_src = lambda x, y, z: dq_src(x, y, z, tau)
         elif solver_type == "classic":
             solver = pyclaw.ClawSolver1D(rs)
-            solver.step_source = lambda x, y, z: q_src(x, y, z, tau)
+            # solver.step_source = lambda x, y, z: q_src(x, y, z, tau)
         solver.kernel_language = kernel_language
 
         solver.bc_lower[0] = pyclaw.BC.periodic
@@ -58,6 +65,7 @@ class Euler1D(object):
         claw = pyclaw.Controller()
         claw.solution = solution
         claw.solver = solver
+        claw.output_format = None
 
         self._solver = solver
         self._domain = domain

@@ -3,10 +3,10 @@ import math
 import numpy as np
 import cupy as cp
 
-from .base import BaseCollision
+from kipack.collision.base import BaseCollision
 
 
-class RandomBatchCollision(BaseCollision):
+class RandomBatchCollisionParticle(BaseCollision):
     def load_parameters(self):
         self.eps = None
         # Load collision model (e and gamma)
@@ -65,7 +65,7 @@ class RandomBatchCollision(BaseCollision):
             2 * math.pi * eps
         )
 
-        return xp.sum(f * kernel, axis=(-1, -2))
+        return xp.sum(f[..., None, None, :, :] * kernel, axis=(-1, -2))
 
     def collide(self, input_f):
         xp = cp.get_array_module(input_f)
