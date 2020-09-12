@@ -1,92 +1,19 @@
 import math
-from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
 from kipack.collision.spherical_design import get_sphrquadrule
 
 
-class BaseVMesh(object, metaclass=ABCMeta):
+class SpectralMesh(object):
     def __init__(self, config, *args, **kwargs):
         # Get dimension
         self._ndim = config.collision_model.dim
         print("{} dimensional collision model.".format(self._ndim))
         # Get the config
         self.config = config.velocity_mesh
-        self._center = None
-        self._centers = None
-        self._weights = None
         # Construct the velocity mesh
         self._construct_velocity_mesh()
-
-    @property
-    def centers(self):
-        if self._centers is None:
-            index = np.indices(self.nvs)
-            self._centers = [
-                self.center[index[i, ...]] for i in range(self.ndim)
-            ]
-        return self._centers
-
-    @property
-    def ndim(self):
-        return self._ndim
-
-    @property
-    def nv(self):
-        return self._nv
-
-    @property
-    def nvs(self):
-        return [self.nv] * self.ndim
-
-    @property
-    def delta(self):
-        return 2 * self.L / self.nv
-
-    @property
-    def weights(self):
-        if self._weights is not None:
-            weights = 1.0
-            for _ in range(self.ndim):
-                weights = weights * self._weights
-            return weights
-        else:
-            return self.delta ** self.ndim * np.ones(self.nvs)
-
-    @property
-    def vsquare(self):
-        vsq = 0.0
-        for v in self.centers:
-            vsq += v ** 2
-        return vsq
-
-    def get_F(self, f):
-        vaxis = tuple(-(i + 1) for i in range(self.ndim))
-        rho = np.sum(f * self.weights, axis=vaxis)
-        m = [np.sum(f * v * self.weights, axis=vaxis) for v in self.centers]
-        E = 0.5 * np.sum(f * self.vsquare * self.weights, axis=vaxis)
-
-        return [rho, m, E]
-
-    def get_p(self, f):
-        rho, m, E = self.get_F(f)
-        u = [m_i / rho for m_i in m]
-        usq = 0.0
-        for ui in u:
-            usq += ui ** 2
-        T = (2 * E / rho - usq) / self.ndim
-
-        return [rho, u, T]
-
-    @abstractmethod
-    def _construct_velocity_mesh(self):
-        pass
-
-
-class SpectralMesh(BaseVMesh):
-    def __init__(self, config, *args, **kwargs):
-        super().__init__(config, *args, **kwargs)
         # Load quadrature for integration
         self._load_radial_quadrature()
         # Construct the integration mesh on a circle (2D) or sphere (3D)
@@ -96,6 +23,9 @@ class SpectralMesh(BaseVMesh):
             self._construct_spherical_mesh()
         else:
             raise ValueError("Dimension must be 2 or 3.")
+
+        self._center = None
+        self._centers = None
 
     def _load_radial_quadrature(self):
         quad_rule = self.config.quad_rule
@@ -142,6 +72,15 @@ class SpectralMesh(BaseVMesh):
         return self._center
 
     @property
+    def centers(self):
+        if self._centers is None:
+            index = np.indices(self.nvs)
+            self._centers = [
+                self.center[index[i, ...]] for i in range(self.ndim)
+            ]
+        return self._centers
+
+    @property
     def ncirc_or_nsphr(self):
         if self.ndim == 2:
             return self._nphi
@@ -160,16 +99,31 @@ class SpectralMesh(BaseVMesh):
             raise ValueError("Dimension must be 2 or 3.")
 
     @property
-    def lower(self):
-        return -self._L
+    def ndim(self):
+        return self._ndim
 
     @property
-    def upper(self):
-        return self._L
+    def nv(self):
+        return self._nv
+
+    @property
+    def nvs(self):
+        return [self.nv] * self.ndim
 
     @property
     def L(self):
         return self._L
+
+    @property
+    def delta(self):
+        return 2 * self.L / self.nv
+
+    @property
+    def vsquare(self):
+        vsq = 0.0
+        for v in self.centers:
+            vsq += v ** 2
+        return vsq
 
     @property
     def nr(self):
@@ -178,10 +132,38 @@ class SpectralMesh(BaseVMesh):
     def rquad(self):
         return self._r, self._wr
 
+    def get_F(self, f):
+        w = self.delta ** (self.ndim)
+        vaxis = tuple(-(i + 1) for i in range(self.ndim))
+        rho = np.sum(f, axis=vaxis) * w
+        m = [np.sum(f * v, axis=vaxis) * w for v in self.centers]
+        E = 0.5 * np.sum(f * self.vsquare, axis=vaxis) * w
 
-class CartesianMesh(BaseVMesh):
-    def __init__(self, config, *args, **kwargs) -> None:
-        super().__init__(config, *args, **kwargs)
+        return [rho, m, E]
+
+    def get_p(self, f):
+        rho, m, E = self.get_F(f)
+        u = [m_i / rho for m_i in m]
+        usq = 0.0
+        for ui in u:
+            usq += ui ** 2
+        T = (2 * E / rho - usq) / self.ndim
+
+        return [rho, u, T]
+
+
+class CartesianMesh(object):
+    def __init__(self, config, *args, **kwargs):
+        # Get dimension
+        self._ndim = config.collision_model.dim
+        print("{} dimensional collision model.".format(self._ndim))
+        # Get the config
+        self.config = config.velocity_mesh
+        self._center = None
+        self._centers = None
+        self._weights = None
+        # Construct the velocity mesh
+        self._construct_velocity_mesh()
 
     def _load_quadrature(self):
         quad_rule = self.config.quad_rule
@@ -200,7 +182,7 @@ class CartesianMesh(BaseVMesh):
         self._upper = self.config.upper
         print("Velocity domain: [{}, {}].".format(self._lower, self._upper))
 
-        if self.config.quad_rule != "uniform":
+        if self.config.quad_rule == "legendre":
             self._load_quadrature()
 
     @property
@@ -210,6 +192,27 @@ class CartesianMesh(BaseVMesh):
             for i in range(self.nv):
                 self._center[i] = self.lower + (i + 0.5) * self.delta
         return self._center
+
+    @property
+    def centers(self):
+        if self._centers is None:
+            index = np.indices(self.nvs)
+            self._centers = [
+                self.center[index[i, ...]] for i in range(self.ndim)
+            ]
+        return self._centers
+
+    @property
+    def ndim(self):
+        return self._ndim
+
+    @property
+    def nv(self):
+        return self._nv
+
+    @property
+    def nvs(self):
+        return [self.nv] * self.ndim
 
     @property
     def lower(self):
@@ -223,3 +226,42 @@ class CartesianMesh(BaseVMesh):
     @property
     def L(self):
         return (self.upper - self.lower) / 2
+
+    @property
+    def delta(self):
+        return 2 * self.L / self.nv
+
+    @property
+    def weights(self):
+        if self._weights is not None:
+            weights = 1.0
+            for _ in range(self.ndim):
+                weights = weights * self._weights
+            return weights
+        else:
+            return self.delta ** self.ndim
+
+    @property
+    def vsquare(self):
+        vsq = 0.0
+        for v in self.centers:
+            vsq += v ** 2
+        return vsq
+
+    def get_F(self, f):
+        vaxis = tuple(-(i + 1) for i in range(self.ndim))
+        rho = np.sum(f * self.weights, axis=vaxis)
+        m = [np.sum(f * v * self.weights, axis=vaxis) for v in self.centers]
+        E = 0.5 * np.sum(f * self.vsquare * self.weights, axis=vaxis)
+
+        return [rho, m, E]
+
+    def get_p(self, f):
+        rho, m, E = self.get_F(f)
+        u = [m_i / rho for m_i in m]
+        usq = 0.0
+        for ui in u:
+            usq += ui ** 2
+        T = (2 * E / rho - usq) / self.ndim
+
+        return [rho, u, T]

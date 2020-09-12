@@ -45,50 +45,47 @@ rkcoeff = {
 }
 
 
-class SplittingSolver1D(pykinetic.BoltzmannSolver1D):
+class WellBalancedSolver1D(pykinetic.BoltzmannSolver1D):
     def __init__(self, riemann_solver=None, collision_operator=None, **kwargs):
         super().__init__(riemann_solver, collision_operator, **kwargs)
 
     def dq(self, state):
 
-        deltaq = self.dq_hyperbolic(state)
-        state.q += deltaq
+        state.aux = self.dq_collision(state) * state.grid.delta[0] / self.dt
 
-        deltaq = self.dq_collision(state)
+        deltaq = self.dq_hyperbolic(state)
+
+        state.q += deltaq
 
         return deltaq
 
 
 def run(
-    kn=1e-4,
-    tau=None,
-    dt=0.001,
-    nt=100,
-    eps=(0.2, 2.0),
-    coll="fsm",
+    kn=1.0,
+    dt=0.01,
+    nt=1000,
+    coll="linear",
     scheme="Euler",
     euler_solver=False,
 ):
     config = collision.utils.CollisionConfig.from_json(
-        "./configs/" + coll + ".json"
+        "./configs/" + "linear" + ".json"
     )
 
-    vmesh = collision.SpectralMesh(config)
-    if coll == "fsm":
-        coll_op = collision.FSInelasticVHSCollision(config, vmesh)
+    vmesh = collision.CartesianMesh(config)
+    if coll == "linear":
+        coll_op = collision.LinearCollision(config, vmesh)
+        rp = pykinetic.riemann.advection_1D
+        solver = pykinetic.BoltzmannSolver1D(rp, coll_op, kn=kn)
     elif coll == "rbm":
-        coll_op = collision.RandomBatchCollisionV2(config, vmesh)
-        a, b = eps
-        coll_op.eps = a * vmesh.delta ** b
+        coll_op = collision.RandomBatchLinearCollision(config, vmesh)
+        rp = pykinetic.riemann.advection_1D_well_balanced
+        solver = WellBalancedSolver1D(rp, coll_op, kn=kn)
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)
         )
 
-    rp = pykinetic.riemann.advection_1D
-    solver = pykinetic.BoltzmannSolver1D(
-        rp, coll_op, kn=kn, heat_bath=tau, device="gpu"
-    )
     if "RK" in scheme:
         solver.time_integrator = "RK"
         solver.a = rkcoeff[scheme]["a"]
@@ -98,14 +95,16 @@ def run(
         solver.time_integrator = scheme
     solver.dt = dt
     print("dt is {}".format(solver.dt))
-    solver.order = 2
+    solver.order = 1
     solver.lim_type = -1
     solver.bc_lower[0] = pykinetic.BC.periodic
     solver.bc_upper[0] = pykinetic.BC.periodic
+    solver.aux_bc_lower[0] = pykinetic.BC.periodic
+    solver.aux_bc_upper[0] = pykinetic.BC.periodic
 
     x = pykinetic.Dimension(0.0, 1.0, 100, name="x")
     domain = pykinetic.Domain([x])
-    state = pykinetic.State(domain, vdof=vmesh.nvs)
+    state = pykinetic.State(domain, vdof=vmesh.nvs, num_aux=vmesh.nvs)
     state.problem_data["v"] = vmesh.centers
     qinit(state, vmesh)
     sol = pykinetic.Solution(state, domain)
@@ -113,7 +112,7 @@ def run(
     output_dict = {}
 
     if euler_solver:
-        euler = Euler1D(tau)
+        euler = Euler1D(0.0)
         euler.set_initial(vmesh.get_p(sol.q)[0], 0, 1.0)
         euler.solve(dt * nt)
         output_dict["euler_macro"] = euler.macros(2)
@@ -147,9 +146,9 @@ def qinit(state, vmesh):
 def maxwellian_vec_init(vmesh, u, T, rho):
     v = vmesh.center
     return (
-        rho[:, None, None]
-        / (2 * math.pi * T)
-        * np.exp(-((v - u)[:, None] ** 2 + v ** 2) / (2 * T))
+        rho[:, None]
+        / np.sqrt(2 * math.pi * T)
+        * np.exp(-((v - u) ** 2) / (2 * T))
     )
 
 

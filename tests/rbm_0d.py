@@ -2,10 +2,9 @@ import copy
 import math
 
 import numpy as np
-from tqdm.notebook import tnrange
 
-from kipack import collision
-from kipack import pykinetic
+from kipack import collision, pykinetic
+from utils import Progbar
 
 rkcoeff = {
     "RK3": {
@@ -33,7 +32,7 @@ def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
         "./configs/" + coll + ".json"
     )
 
-    vmesh = collision.VMesh(config)
+    vmesh = collision.SpectralMesh(config)
     if coll == "fsm":
         coll_op = collision.FSInelasticVHSCollision(config, vmesh)
     elif coll == "rbm":
@@ -56,14 +55,15 @@ def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
     solver.dt = dt
 
     domain = pykinetic.Domain([])
-    state = pykinetic.State(domain, vdof=vmesh.nv_s)
+    state = pykinetic.State(domain, vdof=vmesh.nvs)
 
     qinit(state, vmesh)
 
     sol = pykinetic.Solution(state, domain)
     sol_frames = []
     macro_frames = []
-    for _ in tnrange(nt):
+    pbar = Progbar(nt)
+    for t in range(nt):
         solver.evolve_to_time(sol)
         l2_err = (
             np.sqrt(np.sum((sol.q - bkw_fn(vmesh, sol.t)) ** 2)) * vmesh.delta
@@ -71,6 +71,8 @@ def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
         sol_frames.append([copy.deepcopy(sol), l2_err])
         macro_frames.append(vmesh.get_p(sol.q))
         # sol_frames.append(copy.deepcopy(sol))
+        pbar.update(t + 1, finalize=False)
+    pbar.update(nt, finalize=True)
 
     return macro_frames, sol_frames, vmesh.delta
 
@@ -104,7 +106,7 @@ def ext_Q(vmesh, t):
 
 
 def flat(vmesh, T0):
-    vx, vy = vmesh.v_centers
+    vx, vy = vmesh.centers
     w = np.sqrt(3 * T0)
     return 1 / 4 / w ** 2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
 

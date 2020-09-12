@@ -11,10 +11,10 @@ class RandomBatchCollisionParticle(BaseCollision):
         self.eps = None
         # Load collision model (e and gamma)
         self.nv = self.vm.nv
-        self.vmin = self.vm.v_center[0]
+        self.vmin = self.vm.center[0]
         self.dv = self.vm.delta
         # vgrid shape: (2, nv, nv)
-        self._cpu_v = np.asarray(self.vm.v_centers)
+        self._cpu_v = np.asarray(self.vm.centers)
         # Get sigma
         self.ncirc = self.vm.ncirc_or_nsphr
         # sigma shape (ncir, 2)

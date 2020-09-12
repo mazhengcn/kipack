@@ -18,7 +18,7 @@ class RandomBatchCollisionV2(BaseCollision):
         self.eps = None
         # Load collision model (e and gamma)
         self.nv = self.vm.nv
-        self.vmin = self.vm.v_center[0]
+        self.vmin = self.vm.center[0]
         self.dv = self.vm.delta
         # Create index
         idx_x = np.arange(-int(self.nv / 2), int(self.nv / 2))
@@ -27,7 +27,7 @@ class RandomBatchCollisionV2(BaseCollision):
         # N_tilde
         self.n_tilde = int(self.nv / 2)
         # vgrid shape: (2, nv, nv)
-        self._cpu_v = np.asarray(self.vm.v_centers)
+        self._cpu_v = np.asarray(self.vm.centers)
 
         self._built_cpu = True
 

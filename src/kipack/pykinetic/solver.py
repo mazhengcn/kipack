@@ -335,7 +335,7 @@ class Solver(object):
         self.qbc = np.zeros(qbc_dim)
 
         auxbc_dim = [n + 2 * self.num_ghost for n in state.grid.num_cells]
-        auxbc_dim.insert(-1, state.num_aux)
+        auxbc_dim.extend(state.num_aux)
         self.auxbc = np.empty(auxbc_dim)
 
         self._apply_bcs(state)
@@ -361,7 +361,7 @@ class Solver(object):
         import numpy as np
 
         self.qbc = state.get_qbc_from_q(self.num_ghost, self.qbc)
-        if state.num_aux > 0:
+        if state.num_aux is not None:
             self.auxbc = state.get_auxbc_from_aux(self.num_ghost, self.auxbc)
 
         grid = state.grid
@@ -371,7 +371,7 @@ class Solver(object):
             if state.grid.on_lower_boundary[idim]:
 
                 bcs = []
-                if state.num_aux > 0:
+                if state.num_aux is not None:
                     bcs.append(
                         {
                             "array": self.auxbc,
@@ -429,7 +429,7 @@ class Solver(object):
             if state.grid.on_upper_boundary[idim]:
 
                 bcs = []
-                if state.num_aux > 0:
+                if state.num_aux is not None:
                     bcs.append(
                         {
                             "array": self.auxbc,

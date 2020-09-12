@@ -6,24 +6,6 @@ import numpy as np
 from kipack import collision, pykinetic
 from utils import Progbar
 
-
-class PenalizationSolver0D(pykinetic.BoltzmannSolver0D):
-    def __init__(self, collision_operator, **kwargs):
-
-        self.p = kwargs.get("penalty", 0.0)
-
-        super().__init__(collision_operator=collision_operator, **kwargs)
-
-    def dqdt(self, state):
-        r"""
-        Evaluate dq/dt*(delta t).  This routine is used for implicit time
-        stepping.
-        """
-        pdt_kn = 1.0 - self.dt * self.p / self.kn
-        dqdt = self.dq_collision(state) / pdt_kn
-        return dqdt
-
-
 rkcoeff = {
     "RK3": {
         "a": np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0], [-1.0, 2.0, 0.0]]),
@@ -45,34 +27,29 @@ rkcoeff = {
 }
 
 
-def run(kn=1.0, tau=0.1, p=1.0, dt=0.01, nt=1000, scheme="Euler"):
+def run(kn=1.0, dt=0.01, nt=1000, coll="linear", scheme="Euler"):
     config = collision.utils.CollisionConfig.from_json(
-        "./configs/penalty.json"
+        "./configs/" + "linear" + ".json"
     )
-    vmesh = collision.SpectralMesh(config)
-    coll_op = collision.FSInelasticVHSCollision(config, vmesh)
 
-    tau = tau * kn
-
-    print("tau is {}.".format(tau))
-
-    if scheme == "BEuler":
-        solver = PenalizationSolver0D(
-            collision_operator=coll_op, penalty=p, kn=kn, heat_bath=tau
-        )
-        solver.time_integrator = "BEuler"
+    vmesh = collision.CartesianMesh(config)
+    if coll == "linear":
+        coll_op = collision.LinearCollision(config, vmesh)
+    elif coll == "rbm":
+        coll_op = collision.RandomBatchLinearCollision(config, vmesh)
     else:
-        solver = pykinetic.BoltzmannSolver0D(
-            collision_operator=coll_op, kn=kn, heat_bath=tau
+        raise NotImplementedError(
+            "Collision method {} is not implemented.".format(coll)
         )
-        if "RK" in scheme:
-            print("OK")
-            solver.time_integrator = "RK"
-            solver.a = rkcoeff[scheme]["a"]
-            solver.b = rkcoeff[scheme]["b"]
-            solver.c = rkcoeff[scheme]["c"]
-        else:
-            solver.time_integrator = scheme
+
+    solver = pykinetic.BoltzmannSolver0D(collision_operator=coll_op, kn=kn)
+    if "RK" in scheme:
+        solver.time_integrator = "RK"
+        solver.a = rkcoeff[scheme]["a"]
+        solver.b = rkcoeff[scheme]["b"]
+        solver.c = rkcoeff[scheme]["c"]
+    else:
+        solver.time_integrator = scheme
     solver.dt = dt
 
     domain = pykinetic.Domain([])
@@ -82,21 +59,25 @@ def run(kn=1.0, tau=0.1, p=1.0, dt=0.01, nt=1000, scheme="Euler"):
 
     sol = pykinetic.Solution(state, domain)
     sol_frames = []
-    T_frames = []
+    macro_frames = []
     pbar = Progbar(nt)
     for t in range(nt):
         solver.evolve_to_time(sol)
-        T_frames.append(vmesh.get_p(sol.q)[-1])
-        sol_frames.append(copy.deepcopy(sol))
+        l2_err = (
+            np.sqrt(np.sum((sol.q - bkw_fn(vmesh, sol.t)) ** 2)) * vmesh.delta
+        )
+        sol_frames.append([copy.deepcopy(sol), l2_err])
+        macro_frames.append(vmesh.get_F(sol.q))
+        # sol_frames.append(copy.deepcopy(sol))
         pbar.update(t + 1, finalize=False)
     pbar.update(nt, finalize=True)
 
-    return T_frames, sol_frames, vmesh, coll_op, solver
+    return macro_frames, sol_frames, vmesh.delta
 
 
 def qinit(state, vmesh):
 
-    state.q[:] = bkw_fn(vmesh, 8.0)
+    state.q[:] = maxwellian(vmesh, 1.0)
 
 
 def bkw_fn(vmesh, t):
@@ -122,16 +103,6 @@ def ext_Q(vmesh, t):
     return df * dK
 
 
-def ext_T(t, e, kn, tau, rho0, T0):
-    # exact evolution of temperature
-    # assume u0 = 0
-    t = t / kn
-    tau = tau * kn
-    return (T0 - 8 * tau / (1 - e ** 2)) * np.exp(
-        -(1 - e ** 2) * t * rho0 / 4
-    ) + 8 * tau / (1 - e ** 2)
-
-
 def flat(vmesh, T0):
     vx, vy = vmesh.centers
     w = np.sqrt(3 * T0)
@@ -139,7 +110,8 @@ def flat(vmesh, T0):
 
 
 def maxwellian(vmesh, K):
-    return 1 / (2 * math.pi * K) * np.exp(-0.5 * vmesh.vsq / K)
+    vsq = vmesh.vsquare
+    return 1 / math.sqrt(2 * math.pi * K) * np.exp(-0.5 * vsq / K)
 
 
 def anisotropic_f(v):

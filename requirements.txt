@@ -5,6 +5,6 @@ pyyaml
 numpy
 scipy
 matplotlib
-cupy-cuda102
+cupy-cuda110
 pyfftw
 params-mz @ git+https://github.com/Mayuyu/params.git

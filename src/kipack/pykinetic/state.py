@@ -101,11 +101,19 @@ class State(object):
 
     @property
     def num_aux(self):
-        r"""(int) - Number of auxiliary fields"""
-        if self.aux is not None:
-            return self.aux.shape[-1]
+        r"""(int) - Number of unknowns (components of q)"""
+        if self.aux is None:
+            return None
         else:
-            return 0
+            return self.aux.shape[self.num_dim :]
+
+    # @property
+    # def num_aux(self):
+    #     r"""(int) - Number of auxiliary fields"""
+    #     if self.aux is not None:
+    #         return self.aux.shape[-1]
+    #     else:
+    #         return 0
 
     @property
     def grid(self):
@@ -142,7 +150,7 @@ class State(object):
             self.F = self.new_array(mF)
 
     # ========== Class Methods ===============================================
-    def __init__(self, geom, vdof, num_aux=0):
+    def __init__(self, geom, vdof, num_aux=None):
         from kipack.pykinetic import geometry
 
         if isinstance(geom, geometry.Patch):
@@ -298,7 +306,7 @@ class State(object):
         """
         num_dim = self.patch.num_dim
         if num_dim == 0:
-            auxbc = self.aux
+            auxbc[:] = self.aux
         elif num_dim == 1:
             auxbc[num_ghost:-num_ghost] = self.aux
         elif num_dim == 2:
@@ -343,13 +351,16 @@ class State(object):
         return np.sum(np.abs(self.F[i, ...]))
 
     def new_array(self, dof):
-        import numpy as np
+        if dof:
+            import numpy as np
 
-        if not isinstance(dof, (list, tuple)):
-            dof = [dof]
-        shape = self.grid.num_cells
-        shape.extend(dof)
-        return np.empty(shape)
+            if not isinstance(dof, (list, tuple)):
+                dof = [dof]
+            shape = self.grid.num_cells
+            shape.extend(dof)
+            return np.empty(shape)
+        else:
+            return None
 
     def get_q_global(self):
         r"""

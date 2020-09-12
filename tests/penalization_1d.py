@@ -2,12 +2,10 @@ import copy
 import math
 
 import numpy as np
-from tqdm.notebook import tnrange
 
-from kipack import collision
-from kipack import pykinetic
-
+from kipack import collision, pykinetic
 from tests.euler_1d import Euler1D
+from utils import Progbar
 
 
 def maxwellian(v, rho, u, T):
@@ -120,7 +118,7 @@ def run(kn=1e-4, tau=None, p=5.0, dt=0.001, nt=100, scheme="Euler"):
     config = collision.utils.CollisionConfig.from_json(
         "./configs/penalty.json"
     )
-    vmesh = collision.VMesh(config)
+    vmesh = collision.SpectralMesh(config)
     rp = pykinetic.riemann.advection_1D
     coll_op = collision.FSInelasticVHSCollision(config, vmesh)
 
@@ -149,8 +147,8 @@ def run(kn=1e-4, tau=None, p=5.0, dt=0.001, nt=100, scheme="Euler"):
 
     x = pykinetic.Dimension(0.0, 1.0, 100, name="x")
     domain = pykinetic.Domain([x])
-    state = pykinetic.State(domain, vdof=vmesh.nv_s)
-    state.problem_data["v"] = vmesh.v_centers
+    state = pykinetic.State(domain, vdof=vmesh.nvs)
+    state.problem_data["v"] = vmesh.centers
     qinit(state, vmesh)
     sol = pykinetic.Solution(state, domain)
 
@@ -159,7 +157,8 @@ def run(kn=1e-4, tau=None, p=5.0, dt=0.001, nt=100, scheme="Euler"):
 
     sol_frames = []
     macro_frames = []
-    for _ in tnrange(nt):
+    pbar = Progbar(nt)
+    for t in range(nt):
         solver.evolve_to_time(sol)
         # l2_err = (
         #     np.sqrt(np.sum((sol.q - bkw_fn(vmesh, sol.t)) ** 2))
@@ -168,6 +167,8 @@ def run(kn=1e-4, tau=None, p=5.0, dt=0.001, nt=100, scheme="Euler"):
         # sol_frames.append([copy.deepcopy(sol), l2_err])
         macro_frames.append(vmesh.get_p(sol.q))
         sol_frames.append(copy.deepcopy(sol))
+        pbar.update(t + 1, finalize=False)
+    pbar.update(nt, finalize=True)
 
     euler.solve(dt * nt)
 
@@ -181,7 +182,7 @@ def qinit(state, vmesh):
 
 
 def maxwellian_vec_init(vmesh, u, T, rho):
-    v = vmesh.v_center
+    v = vmesh.center
     return (
         rho[:, None, None]
         / (2 * math.pi * T)
@@ -221,7 +222,7 @@ def ext_T(rho0, T0, e, tau, t):
 
 
 def flat(vmesh, T0):
-    vx, vy = vmesh.v_centers
+    vx, vy = vmesh.centers
     w = np.sqrt(3 * T0)
     return 1 / 4 / w ** 2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
 
