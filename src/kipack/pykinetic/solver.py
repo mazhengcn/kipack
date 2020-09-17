@@ -335,8 +335,11 @@ class Solver(object):
         self.qbc = np.zeros(qbc_dim)
 
         auxbc_dim = [n + 2 * self.num_ghost for n in state.grid.num_cells]
-        auxbc_dim.extend(state.num_aux)
-        self.auxbc = np.empty(auxbc_dim)
+        if state.num_aux:
+            auxbc_dim.extend(state.num_aux)
+            self.auxbc = np.empty(auxbc_dim)
+        else:
+            self.auxbc = None
 
         self._apply_bcs(state)
 

@@ -5,6 +5,7 @@ import numpy as np
 
 from euler_1d import Euler1D
 from kipack import collision, pykinetic
+from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
 from utils import Progbar
 
 
@@ -45,21 +46,6 @@ rkcoeff = {
 }
 
 
-class WellBalancedSolver1D(pykinetic.BoltzmannSolver1D):
-    def __init__(self, riemann_solver=None, collision_operator=None, **kwargs):
-        super().__init__(riemann_solver, collision_operator, **kwargs)
-
-    def dq(self, state):
-
-        state.aux = self.dq_collision(state) * state.grid.delta[0] / self.dt
-
-        deltaq = self.dq_hyperbolic(state)
-
-        state.q += deltaq
-
-        return deltaq
-
-
 def run(
     kn=1.0,
     dt=0.01,
@@ -78,9 +64,9 @@ def run(
         rp = pykinetic.riemann.advection_1D
         solver = pykinetic.BoltzmannSolver1D(rp, coll_op, kn=kn)
     elif coll == "rbm":
-        coll_op = collision.RandomBatchLinearCollision(config, vmesh)
-        rp = pykinetic.riemann.advection_1D_well_balanced
-        solver = WellBalancedSolver1D(rp, coll_op, kn=kn)
+        coll_op = collision.SymmetricRBMLinearCollision(config, vmesh)
+        rp = pykinetic.riemann.advection_1D
+        solver = BoltzmannSolver1D(rp, coll_op, kn=kn)
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)

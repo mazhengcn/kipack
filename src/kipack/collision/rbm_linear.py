@@ -34,7 +34,26 @@ class RandomBatchLinearCollision(BaseCollision):
         f = input_f
         idx = self._random_batch(xp)
         # print(idx)
-        return self.nv * 0.5 ** (self.ndim) * f[idx] * self.weights[idx] - f
+        return (
+            self.nv * 0.5 ** (self.ndim) * f[..., idx] * self.weights[idx] - f
+        )
 
     def perform_precomputation(self):
         pass
+
+
+class SymmetricRBMLinearCollision(RandomBatchLinearCollision):
+    def _random_batch(self, xp):
+        nvrange = xp.random.permutation(self.nv)
+        idx = xp.empty(self.nv, dtype=int)
+        idx[nvrange[: self.nv // 2]] = nvrange[self.nv // 2 :]
+        idx[nvrange[self.nv // 2 :]] = nvrange[: self.nv // 2]
+        return idx
+
+    def collide(self, input_f):
+        xp = cp.get_array_module(input_f)
+        f = input_f
+        idx = self._random_batch(xp)
+        return (
+            self.nv * 0.5 ** (self.ndim) * f[..., idx] * self.weights[idx] - f
+        )

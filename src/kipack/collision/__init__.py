@@ -6,4 +6,7 @@ from kipack.collision.vmesh import CartesianMesh, SpectralMesh  # noqa
 from kipack.collision.base import BaseCollision  # noqa
 from kipack.collision.utils import CollisionConfig  # noqa
 from kipack.collision.linear import LinearCollision  # noqa
-from kipack.collision.rbm_linear import RandomBatchLinearCollision  # noqa
+from kipack.collision.rbm_linear import (
+    RandomBatchLinearCollision,
+    SymmetricRBMLinearCollision,
+)  # noqa
