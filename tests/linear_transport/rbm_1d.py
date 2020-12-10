@@ -4,7 +4,6 @@ import math
 import numpy as np
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
-
 from utils import Progbar
 
 
