@@ -1,6 +1,5 @@
 import cupy as cp
 import numpy as np
-
 from kipack.collision.base import BaseCollision
 
 
@@ -26,10 +25,10 @@ class LinearCollision(BaseCollision):
     def collide(self, input_f):
         xp = cp.get_array_module(input_f)
         f = input_f
-        vaxis = tuple(-(i + 1) for i in range(self.ndim))
+        vaxis = tuple(-(i + 1) for i in range(self.num_dim))
 
         return (
-            0.5 ** (self.ndim)
+            0.5 ** (self.num_dim)
             * xp.sum(f * self.weights, axis=vaxis, keepdims=True)
             - f
         )

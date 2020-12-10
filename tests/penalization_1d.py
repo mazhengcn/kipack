@@ -2,8 +2,8 @@ import copy
 import math
 
 import numpy as np
-
 from kipack import collision, pykinetic
+
 from tests.euler_1d import Euler1D
 from utils import Progbar
 

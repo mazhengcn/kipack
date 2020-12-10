@@ -7,14 +7,12 @@ import logging
 
 import numpy as np
 import six
-from six.moves import range
-
 from kipack.pykinetic.cfl import CFL
 
 
 class CFLError(Exception):
     """Error raised when cfl_max is exceeded.  Is this a
-       reasonable mechanism for handling that?"""
+    reasonable mechanism for handling that?"""
 
     def __init__(self, msg):
         super().__init__(msg)
@@ -31,13 +29,12 @@ class BC:
 
 # =================== Dummy routines =============
 def default_compute_gauge_values(q, aux):
-    r"""By default, record values of q at gauges.
-    """
+    """By default, record values of q at gauges."""
     return q
 
 
 def before_step(solver, solution):
-    r"""
+    """
     Dummy routine called before each step
 
     Replace this routine if you want to do something before each time step.
@@ -46,7 +43,7 @@ def before_step(solver, solution):
 
 
 class Solver(object):
-    r"""
+    """
     PyKinetic solver superclass.
 
     The pykinetic.Solver.solver class is an abstract class that should
@@ -148,7 +145,7 @@ class Solver(object):
     #   Initialization routines
     #  ======================================================================
     def __init__(self, riemann_solver=None, collision_operator=None):
-        r"""
+        """
         Initialize a Solver object
 
         See :class:`Solver` for full documentation
@@ -194,22 +191,31 @@ class Solver(object):
         self.user_aux_bc_lower = None
         self.user_aux_bc_upper = None
 
-        self.vdof = None
+        self.num_eqn = None
+        self.num_vnodes = None
         self.num_waves = None
 
         self.compute_gauge_values = default_compute_gauge_values
-        r"""(function) - Function that computes quantities to be recorded
+        """(function) - Function that computes quantities to be recorded
         at gauges"""
 
         self.qbc = None
-        r""" Array to hold ghost cell values.  This is the one that gets passed
+        """ Array to hold ghost cell values.  This is the one that gets passed
         to the Fortran code.  """
 
         if riemann_solver is not None:
             self.rp = riemann_solver
+            rp_name = riemann_solver.__name__.split(".")[-1]
+            from kipack.pykinetic import riemann
+
+            self.num_eqn = riemann.static.num_eqn.get(rp_name, None)
+            self.num_waves = riemann.static.num_waves.get(rp_name, None)
 
         if collision_operator is not None:
-            self.coll = collision_operator
+            if not isinstance(collision_operator, (list, tuple)):
+                self.coll = [collision_operator]
+            else:
+                self.coll = collision_operator
 
         self._isinitialized = True
 
@@ -236,7 +242,7 @@ class Solver(object):
     #  Solver setup and validation routines
     # ========================================================================
     def is_valid(self):
-        r"""
+        """
         Checks that all required solver attributes are set.
 
         Checks to make sure that all the required attributes for the solver
@@ -275,7 +281,7 @@ class Solver(object):
         return valid, reason
 
     def setup(self, solution):
-        r"""
+        """
         Stub for solver setup routines.
 
         This function is called before a set of time steps are taken in order
@@ -288,7 +294,7 @@ class Solver(object):
         self._is_set_up = True
 
     def __del__(self):
-        r"""
+        """
         Stub for solver teardown routines.
 
         This function is called at the end of a simulation.
@@ -307,7 +313,7 @@ class Solver(object):
     #  Boundary Conditions
     # ========================================================================
     def _allocate_bc_arrays(self, state):
-        r"""
+        """
         Create numpy arrays for q and aux with ghost cells attached.
         These arrays are referred to throughout the code as qbc and auxbc.
 
@@ -331,20 +337,19 @@ class Solver(object):
                     self._use_old_bc_sig = True
 
         qbc_dim = [n + 2 * self.num_ghost for n in state.grid.num_cells]
-        qbc_dim.extend(state.vdof)
+        qbc_dim.insert(0, state.num_eqn)
+        qbc_dim.extend(state.num_vnodes)
         self.qbc = np.zeros(qbc_dim)
 
         auxbc_dim = [n + 2 * self.num_ghost for n in state.grid.num_cells]
-        if state.num_aux:
-            auxbc_dim.extend(state.num_aux)
-            self.auxbc = np.empty(auxbc_dim)
-        else:
-            self.auxbc = None
+        auxbc_dim.insert(0, state.num_eqn)
+        auxbc_dim.extend(state.num_vnodes)
+        self.auxbc = np.empty(auxbc_dim)
 
         self._apply_bcs(state)
 
     def _apply_bcs(self, state):
-        r"""
+        """
         Apply boundary conditions to both q and aux arrays.
 
         In the case of a user-defined boundary condition, both arrays
@@ -364,7 +369,7 @@ class Solver(object):
         import numpy as np
 
         self.qbc = state.get_qbc_from_q(self.num_ghost, self.qbc)
-        if state.num_aux is not None:
+        if state.num_aux > 0:
             self.auxbc = state.get_auxbc_from_aux(self.num_ghost, self.auxbc)
 
         grid = state.grid
@@ -374,7 +379,7 @@ class Solver(object):
             if state.grid.on_lower_boundary[idim]:
 
                 bcs = []
-                if state.num_aux is not None:
+                if state.num_aux > 0:
                     bcs.append(
                         {
                             "array": self.auxbc,
@@ -424,7 +429,7 @@ class Solver(object):
                             state,
                             dim,
                             state.t,
-                            np.moveaxis(bc["array"], idim, 0),
+                            np.moveaxis(bc["array"], idim + 1, 1),
                             idim,
                             bc["variable"],
                         )
@@ -432,7 +437,7 @@ class Solver(object):
             if state.grid.on_upper_boundary[idim]:
 
                 bcs = []
-                if state.num_aux is not None:
+                if state.num_aux > 0:
                     bcs.append(
                         {
                             "array": self.auxbc,
@@ -482,13 +487,13 @@ class Solver(object):
                             state,
                             dim,
                             state.t,
-                            np.moveaxis(bc["array"], idim, 0),
+                            np.moveaxis(bc["array"], idim + 1, 1),
                             idim,
                             bc["variable"],
                         )
 
     def _bc_lower(self, bc_type, state, dim, t, array, idim, name):
-        r"""
+        """
         Apply lower boundary conditions to array.
 
         Sets the lower coordinate's ghost cells of *array* depending on what
@@ -508,15 +513,17 @@ class Solver(object):
 
         if bc_type == BC.extrap:
             for i in range(self.num_ghost):
-                array[i] = array[self.num_ghost]
+                array[:, i, ...] = array[:, self.num_ghost, ...]
         elif bc_type == BC.periodic:
-            array[: self.num_ghost] = array[
-                -2 * self.num_ghost : -self.num_ghost
+            array[:, : self.num_ghost] = array[
+                :, -2 * self.num_ghost : -self.num_ghost
             ]
         elif bc_type == BC.wall:
             if name == "q":
                 for i in range(self.num_ghost):
-                    array[i] = array[2 * self.num_ghost - 1 - i]
+                    array[:, i, ...] = array[
+                        :, 2 * self.num_ghost - 1 - i, ...
+                    ]
                     # Negate normal velocity
                     # TODO
                     # array[self.reflect_index[idim], i, ...] = -array[
@@ -526,7 +533,9 @@ class Solver(object):
                     # ]
             else:
                 for i in range(self.num_ghost):
-                    array[i] = array[2 * self.num_ghost - 1 - i]
+                    array[:, i, ...] = array[
+                        :, 2 * self.num_ghost - 1 - i, ...
+                    ]
         else:
             if bc_type is None:
                 raise Exception(
@@ -539,7 +548,7 @@ class Solver(object):
                 )
 
     def _bc_upper(self, bc_type, state, dim, t, array, idim, name):
-        r"""
+        """
         Apply upper boundary conditions to array
 
         Sets the upper coordinate's ghost cells of *array* depending on what
@@ -559,16 +568,18 @@ class Solver(object):
 
         if bc_type == BC.extrap:
             for i in range(self.num_ghost):
-                array[-i - 1] = array[-self.num_ghost - 1]
+                array[:, -i - 1, ...] = array[:, -self.num_ghost - 1, ...]
         elif bc_type == BC.periodic:
             # This process owns the whole patch
-            array[-self.num_ghost :] = array[
-                self.num_ghost : 2 * self.num_ghost
+            array[:, -self.num_ghost :, ...] = array[
+                :, self.num_ghost : 2 * self.num_ghost, ...
             ]
         elif bc_type == BC.wall:
             if name == "q":
                 for i in range(self.num_ghost):
-                    array[-i - 1] = array[-2 * self.num_ghost + i]
+                    array[:, -i - 1, ...] = array[
+                        :, -2 * self.num_ghost + i, ...
+                    ]
                     #  Negate normal velocity
                     # TODO
                     # array[self.reflect_index[idim], -i - 1, ...] = -array[
@@ -576,7 +587,9 @@ class Solver(object):
                     # ]
             else:
                 for i in range(self.num_ghost):
-                    array[-i - 1] = array[-2 * self.num_ghost + i]
+                    array[:, -i - 1, ...] = array[
+                        :, -2 * self.num_ghost + i, ...
+                    ]
         else:
             if bc_type is None:
                 raise Exception(
@@ -622,7 +635,7 @@ class Solver(object):
                 self.dt = tend - t
 
     def evolve_to_time(self, solution, tend=None):
-        r"""
+        """
         Evolve solution from solution.t to tend.  If tend is not specified,
         take a single step.
 
@@ -756,8 +769,8 @@ class Solver(object):
     #  Gauges
     # ========================================================================
     def write_gauge_values(self, solution):
-        r"""Write solution (or derived quantity) values at each gauge coordinate
-            to file.
+        """Write solution (or derived quantity) values at each gauge coordinate
+        to file.
         """
         import numpy as np
 
@@ -766,12 +779,12 @@ class Solver(object):
         for i, gauge in enumerate(solution.state.grid.gauges):
             if self.num_dim == 1:
                 ix = gauge[0]
-                if solution.num_aux > 0:
+                if solution.num_aux:
                     aux = solution.state.aux[:, ix]
                 q = solution.state.q[:, ix]
             elif self.num_dim == 2:
                 ix, iy = gauge
-                if solution.num_aux > 0:
+                if solution.aux_shape:
                     aux = solution.state.aux[:, ix, iy]
                 q = solution.state.q[:, ix, iy]
             p = self.compute_gauge_values(q, aux)
@@ -791,9 +804,3 @@ class Solver(object):
                 )
             except IOError:
                 raise Exception("Gauge files are not set up correctly.")
-
-
-if __name__ == "__main__":
-    import doctest
-
-    doctest.testmod()

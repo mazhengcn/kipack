@@ -11,7 +11,7 @@ from kipack.pykinetic.state import State
 #  Solution Class
 # ============================================================================
 class Solution(object):
-    r"""
+    """
     Patch container class
 
     :Input and Output:
@@ -46,10 +46,10 @@ class Solution(object):
                by the appropriate :ref:`geometry <pyclaw_geometry>` object
                which can be one of:
 
-                 - (:class:`~pyclaw.geometry.Domain`)
-                 - (:class:`~pyclaw.geometry.Patch`) - A domain is created
+                 - (:class:`~pykinetic.geometry.Domain`)
+                 - (:class:`~pykinetic.geometry.Patch`) - A domain is created
                    with the patch or list of patches provided.
-                 - (:class:`~pyclaw.geometry.Dimension`) - A domain and
+                 - (:class:`~pykinetic.geometry.Dimension`) - A domain and
                    patch is created with the dimensions or list of
                    dimensions provided.
             3. `args` is a variable number of keyword arguments that describes
@@ -107,13 +107,15 @@ class Solution(object):
                     # List of States
                     self.states = arg[0]
                 elif isinstance(arg[0][0], int):
-                    self.states = State(self.domain, arg[0][0], arg[0][1])
+                    self.states = State(
+                        self.domain, arg[0][2], arg[0][0], arg[0][1]
+                    )
                 else:
                     raise Exception(
                         "Invalid arguments for Solution initialization."
                     )
             elif isinstance(arg[0], int):
-                self.states.append(State(self.domain, arg[0]))
+                self.states.append(State(self.domain, arg[1], arg[0]))
             if self.states == [] or self.domain is None:
                 raise Exception(
                     "Invalid arguments for Solution initialization."
@@ -151,7 +153,7 @@ class Solution(object):
     def __getattr__(self, key):
         if key in (
             "t",
-            "vdof",
+            "v_shape",
             "mp",
             "mF",
             "q",
@@ -172,7 +174,6 @@ class Solution(object):
             "edges",
             "gauges",
             "num_eqn",
-            "num_aux",
             "grid",
             "problem_data",
         ):
@@ -191,12 +192,12 @@ class Solution(object):
     # ========== Properties ==================================================
     @property
     def state(self):
-        r"""(:class:`State`) - Base state is returned"""
+        """(:class:`State`) - Base state is returned"""
         return self.states[0]
 
     @property
     def patch(self):
-        r"""(:class:`Patch`) - Base state's patch is returned"""
+        """(:class:`Patch`) - Base state's patch is returned"""
         if self.domain:
             return self.domain.patch
         else:
@@ -204,14 +205,15 @@ class Solution(object):
 
     @property
     def start_frame(self):
-        r"""(int) - : Solution start frame number in case the `Solution`
-        object is initialized by loading frame from file"""
+        """(int) - : Solution start frame number in case the `Solution`
+        object is initialized by loading frame from file
+        """
         return self._start_frame
 
     _start_frame = 0
 
     def is_valid(self):
-        r"""
+        """
         Checks to see if this solution is valid
 
         The Solution checks to make sure it is valid by checking each of its
@@ -231,7 +233,7 @@ class Solution(object):
         return str(output)
 
     def set_all_states(self, attr, value, overwrite=True):
-        r"""
+        """
         Sets all member states attribute 'attr' to value
 
         :Input:
@@ -245,7 +247,7 @@ class Solution(object):
                 setattr(state, attr, value)
 
     def _get_base_state_attribute(self, name):
-        r"""
+        """
         Return base state attribute
 
         :Output:
@@ -425,7 +427,7 @@ class Solution(object):
     #             raise ValueError("File format %s not found." % file_format)
 
     def plot(self):
-        r"""
+        """
         Plot the solution
         """
         raise NotImplementedError(
@@ -433,9 +435,3 @@ class Solution(object):
             + "implemented as of yet, please refer to the plotting module for"
             + " how to plot solutions."
         )
-
-
-if __name__ == "__main__":
-    import doctest
-
-    doctest.testmod()

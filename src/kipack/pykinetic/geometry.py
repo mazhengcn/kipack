@@ -2,7 +2,6 @@ from __future__ import absolute_import, print_function
 
 import numpy as np
 import six
-from six.moves import range, zip
 
 
 # Default mapc2p functions
@@ -26,7 +25,7 @@ identity_map = {
 
 
 class Grid(object):
-    r"""
+    """
     Representation of a single grid.
 
     :Dimension information:
@@ -130,24 +129,24 @@ class Grid(object):
     """
 
     def __init__(self, dimensions):
-        r"""
+        """
         Instantiate a Grid object
 
         See :class:`Grid` for more info.
         """
 
         # ========== Attribute Definitions ===================================
-        r"""(func) - Coordinate mapping function"""
+        """(func) - Coordinate mapping function"""
         self.gauges = []
-        r"""(list) - List of gauges' indices to be filled by add_gauges
+        """(list) - List of gauges' indices to be filled by add_gauges
         method.
         """
         self.gauge_file_names = []
-        r"""(list) - List of file names to write gauge values to"""
+        """(list) - List of file names to write gauge values to"""
         self.gauge_files = []
-        r"""(list) - List of file objects to write gauge values to"""
+        """(list) - List of file objects to write gauge values to"""
         self.gauge_dir_name = "_gauges"
-        r"""(string) - Name of the output directory for gauges. If the
+        """(string) - Name of the output directory for gauges. If the
         `Controller` class is used to run the application, this directory by
         default will be created under the `Controller` `outdir` directory.
         """
@@ -216,7 +215,7 @@ class Grid(object):
 
     # ========== Dimension Manipulation ======================================
     def add_dimension(self, dimension):
-        r"""
+        """
         Add the specified dimension to this patch
 
         :Input:
@@ -239,14 +238,14 @@ class Grid(object):
         self.mapc2p = identity_map[str(self.num_dim)]
 
     def get_dim_attribute(self, attr):
-        r"""
+        """
         Returns a tuple of all dimensions' attribute attr
         """
         return [getattr(dim, attr) for dim in self.dimensions]
 
     # ========== Coordinates =============================================
     def _compute_c_centers(self, recompute=False):
-        r"""Calculate the coordinates of the centers in the computational domain.
+        """Calculate the coordinates of the centers in the computational domain.
 
         :Input:
          - *recompute* - (bool) Whether to force a recompute of the arrays
@@ -264,7 +263,7 @@ class Grid(object):
                 self._c_centers.append(center_array[index[i, ...]])
 
     def _compute_c_nodes(self, recompute=False):
-        r"""Calculate the coordinates of the nodes in the computational domain.
+        """Calculate the coordinates of the nodes in the computational domain.
 
         :Input:
          - *recompute* - (bool) Whether to force a recompute of the arrays
@@ -364,38 +363,38 @@ class Grid(object):
     @property
     def dimensions(self):
         r"""(list) - List of :class:`Dimension` objects defining the
-                grid's extent and resolution"""
+        grid's extent and resolution"""
         return [getattr(self, name) for name in self._dimensions]
 
     @property
     def c_centers(self):
         r"""(list of ndarray(...)) - List containing the arrays locating
-                  the computational locations of cell centers, see
-                  :meth:`_compute_c_centers` for more info."""
+        the computational locations of cell centers, see
+        :meth:`_compute_c_centers` for more info."""
         self._compute_c_centers()
         return self._c_centers
 
     @property
     def c_nodes(self):
         r"""(list of ndarray(...)) - List containing the arrays locating
-                  the computational locations of cell nodes, see
-                  :meth:`_compute_c_nodes` for more info."""
+        the computational locations of cell nodes, see
+        :meth:`_compute_c_nodes` for more info."""
         self._compute_c_nodes()
         return self._c_nodes
 
     @property
     def p_centers(self):
         r"""(list of ndarray(...)) - List containing the arrays locating
-                  the physical locations of cell centers, see
-                  :meth:`_compute_p_centers` for more info."""
+        the physical locations of cell centers, see
+        :meth:`_compute_p_centers` for more info."""
         self._compute_p_centers()
         return self._p_centers
 
     @property
     def p_nodes(self):
         r"""(list of ndarray(...)) - List containing the arrays locating
-                  the physical locations of cell nodes, see
-                  :meth:`_compute_p_nodes` for more info."""
+        the physical locations of cell nodes, see
+        :meth:`_compute_p_nodes` for more info."""
         self._compute_p_nodes()
         return self._p_nodes
 
@@ -697,9 +696,10 @@ class Dimension(object):
         self._check_validity()
 
     def _check_validity(self):
-        assert isinstance(self.num_cells, int), (
-            "Dimension.num_cells must be an integer; got %s"
-            % type(self.num_cells)
+        assert isinstance(
+            self.num_cells, int
+        ), "Dimension.num_cells must be an integer; got %s" % type(
+            self.num_cells
         )
         assert isinstance(self.lower, float), "Dimension.lower must be a float"
         assert isinstance(self.upper, float), "Dimension.upper must be a float"
@@ -715,7 +715,6 @@ class Dimension(object):
 class Patch(object):
     """
     :Global Patch information:
-
         Each patch has a value for :attr:`level` and :attr:`patch_index`.
     """
 
@@ -808,7 +807,7 @@ class Patch(object):
     @property
     def dimensions(self):
         r"""(list) - List of :class:`Dimension` objects defining the
-                grid's extent and resolution"""
+        grid's extent and resolution"""
         return [getattr(self, name) for name in self._dimensions]
 
     @property

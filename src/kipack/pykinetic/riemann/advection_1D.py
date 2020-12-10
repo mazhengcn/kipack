@@ -1,36 +1,24 @@
 import numpy as np
 
+num_eqn = 1
+num_waves = 1
+
 
 def advection_1D(q_l, q_r, aux_l, aux_r, problem_data):
-    r"""Basic 1d advection riemann solver
-    *problem_data* should contain -
-     - *vx* - (float) Determines advection speed
-    """
+    # Number of Riemann problems we are solving
+    num_rp = q_l.shape[1]
+    num_vnodes = q_l.shape[2:]
 
-    # wave shape: q.shape = (nx, nv, nv) (2D)
-    wave = q_r - q_l
-    # s shape: v shape = (2, nv, nv) (2D)
-    s = problem_data["v"][0]
-    apdq = np.maximum(s, 0.0) * wave
-    amdq = np.minimum(s, 0.0) * wave
+    # Return values
+    wave = np.empty((num_eqn, num_waves, num_rp) + num_vnodes)
+    s = np.empty((num_waves, 1) + num_vnodes)
+    amdq = np.zeros((num_eqn, num_rp) + num_vnodes)
+    apdq = np.zeros((num_eqn, num_rp) + num_vnodes)
 
-    return wave, s, amdq, apdq
+    wave[0, 0, :] = q_r[0, :] - q_l[0, :]
+    s[0, 0, :] = problem_data["v"][0]
 
-
-def advection_1D_well_balanced(q_l, q_r, aux_l, aux_r, problem_data):
-    r"""Basic 1d advection riemann solver
-    *problem_data* should contain -
-     - *vx* - (float) Determines advection speed
-    """
-
-    # wave shape: q.shape = (nx, nv, nv) (2D)
-    wave = q_r - q_l
-    # s shape: v shape = (2, nv, nv) (2D)
-    s = problem_data["v"][0]
-    apdq = np.maximum(s, 0.0) * wave
-    amdq = np.minimum(s, 0.0) * wave
-
-    apdq -= (s > 0.0) * 0.5 * (aux_r + aux_l)
-    amdq -= (s < 0.0) * 0.5 * (aux_r + aux_l)
+    apdq[0, :] = np.maximum(s[0, 0, :], 0.0) * wave[0, 0, :]
+    amdq[0, :] = np.minimum(s[0, 0, :], 0.0) * wave[0, 0, :]
 
     return wave, s, amdq, apdq

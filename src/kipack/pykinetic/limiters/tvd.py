@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def limit(wave, s, limiter, dtdx):
+def limit(num_eqn, wave, s, limiter, dtdx):
     r"""
     Apply a limiter to the waves
 
@@ -11,7 +11,7 @@ def limit(wave, s, limiter, dtdx):
 
     :Input:
      - *wave* - (ndarray(num_eqn,num_waves,:)) The waves at each interface
-     - *s* - (ndarray(num_waves)) Speeds for each wave
+     - *s* - (ndarray(:,num_waves)) Speeds for each wave
      - *limiter* - (``int`` list) Array of type ``int`` determining which
          limiter to use
      - *dtdx* - (ndarray(:)) :math:`\Delta t / \Delta x` ratio, used for CFL
@@ -24,33 +24,41 @@ def limit(wave, s, limiter, dtdx):
     # wave_norm2 is the sum of the squares along the num_eqn axis,
     # so the norm of the cell i for wave number j is addressed
     # as wave_norm2[i,j]
-    wave_norm2 = wave ** 2
-    wave_zero_mask = np.array((wave == 0), dtype=float)
+    wave_norm2 = np.sum(wave ** 2, axis=0)
+    wave_zero_mask = np.array((wave_norm2 == 0), dtype=float)
     wave_nonzero_mask = 1.0 - wave_zero_mask
 
     # dotls contains the products of adjacent cell values summed
     # along the num_eqn axis.  For reference, dotls[0,:,:] is the dot
     # product of the 0 cell and the 1 cell.
-    dotls = wave[1:] * wave[:-1]
-    spos = np.array(s > 0.0, dtype=float)
+    dotls = np.sum(
+        wave[:, :, 1:] * wave[:, :, :-1], axis=0
+    )  # (num_waves, rp, num_vnodes)
+    spos = np.array(s > 0.0, dtype=float)  # (num_waves, 1, num_vnodes)
 
     # Here we construct a masked array, then fill the empty values with 0,
     # this is done in case wave_norm2 is 0 or close to it
     # Take upwind dot product
-    r = np.ma.array((spos * dotls[:-1] + (1.0 - spos) * dotls[1:]))
+    r = np.ma.array((spos * dotls[:, :-1] + (1.0 - spos) * dotls[:, 1:]))
     # Divide it by the norm**2
-    r /= np.ma.array(wave_norm2[1:-1])
+    r /= np.ma.array(wave_norm2[:, 1:-1])
     # Fill the rest of the array
     r.fill_value = 0
-    r = r.filled()
+    r = r.filled()  # (num_waves, rp, num_vnodes)
 
-    limit_func = limiter_functions.get(limiter)
-    cfl = np.abs(s * dtdx)
-    wlimitr = limit_func(r, cfl)
-    wave[1:-1] = (
-        wave[1:-1] * wave_zero_mask[1:-1]
-        + wlimitr * wave[1:-1] * wave_nonzero_mask[1:-1]
-    )
+    for mw in range(wave.shape[1]):
+        limit_func = limiter_functions.get(limiter)
+        if limit_func is not None:
+            for m in range(num_eqn):
+                cfl = np.abs(
+                    s[mw, :] * dtdx[1:-2] * spos[mw, :]
+                    + (1 - spos[mw, :]) * dtdx[2:-1]
+                )
+                wlimitr = limit_func(r[mw, :], cfl)
+                wave[m, mw, 1:-1] = (
+                    wave[m, mw, 1:-1] * wave_zero_mask[mw, 1:-1]
+                    + wlimitr * wave[m, mw, 1:-1] * wave_nonzero_mask[mw, 1:-1]
+                )
 
     return wave
 

@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 
-from six.moves import range
-
 
 def weno(k, q):
     import numpy as np
@@ -11,10 +9,10 @@ def weno(k, q):
 
     epweno = 1.0e-36
 
-    dqiph = np.diff(q, 1, axis=0)
+    dqiph = np.diff(q, 1, axis=1)
 
     LL = 3
-    UL = q.shape[0] - 2
+    UL = q.shape[1] - 2
     qr = q.copy()
     ql = q.copy()
 
@@ -27,10 +25,10 @@ def weno(k, q):
         intwo = -2 * im
 
         # Create references to DQ slices
-        dq_intwo = dqiph[LL + intwo - 1 : UL + intwo - 1]
-        dq_ione = dqiph[LL + ione - 1 : UL + ione - 1]
-        dq_inone = dqiph[LL + inone - 1 : UL + inone - 1]
-        dq = dqiph[LL - 1 : UL - 1]
+        dq_intwo = dqiph[:, LL + intwo - 1 : UL + intwo - 1]
+        dq_ione = dqiph[:, LL + ione - 1 : UL + ione - 1]
+        dq_inone = dqiph[:, LL + inone - 1 : UL + inone - 1]
+        dq = dqiph[:, LL - 1 : UL - 1]
 
         t1 = im * (dq_intwo - dq_inone)
         t2 = im * (dq_inone - dq)
@@ -51,14 +49,14 @@ def weno(k, q):
         s3 *= t0
 
         z = (s1 * (t2 - t1) + (0.5 * s3 - 0.25) * (t3 - t2)) / 3.0 + (
-            -q[LL - 2 : UL - 2]
-            + 7.0 * (q[LL - 1 : UL - 1] + q[LL:UL])
-            - q[LL + 1 : UL + 1]
+            -q[:, LL - 2 : UL - 2]
+            + 7.0 * (q[:, LL - 1 : UL - 1] + q[:, LL:UL])
+            - q[:, LL + 1 : UL + 1]
         ) / 12.0
         if m1 == 1:
-            qr[LL - 1 : UL - 1] = z
+            qr[:, LL - 1 : UL - 1] = z
         else:
-            ql[LL:UL] = z
+            ql[:, LL:UL] = z
 
     return ql, qr
 

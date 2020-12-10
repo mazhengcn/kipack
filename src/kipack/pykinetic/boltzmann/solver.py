@@ -2,10 +2,8 @@
 from __future__ import absolute_import
 
 import numpy as np
-from six.moves import range
-
+from kipack.pykinetic.limiters import recon, tvd
 from kipack.pykinetic.solver import Solver
-from kipack.pykinetic.limiters import tvd, recon
 
 # Reconstructor
 # from pykinetic.limiters import recon
@@ -204,7 +202,7 @@ class BoltzmannSolver(Solver):
             )
 
         state = solution.state
-        state.set_num_ghost(self.num_ghost)
+        # state.set_num_ghost(self.num_ghost)
         # End hack
 
         if self.time_integrator == "LMM":
@@ -711,11 +709,16 @@ class BoltzmannSolver0D(BoltzmannSolver):
         )
 
     def dq_collision(self, state):
-        return (
-            self.coll(state.q, heat_bath=self.tau, device=self.device)
-            * self.dt
-            / self.kn
-        )
+        collisions = []
+        for i in range(len(self.coll)):
+            collisions.append(
+                self.coll[i](
+                    state.q[i, ...], heat_bath=self.tau, device=self.device
+                )
+                * self.dt
+                / self.kn
+            )
+        return collisions
 
 
 class BoltzmannSolver1D(BoltzmannSolver):
@@ -730,14 +733,17 @@ class BoltzmannSolver1D(BoltzmannSolver):
         super().__init__(riemann_solver, collision_operator)
 
     def dq_collision(self, state):
-        return (
-            self.coll(state.q, heat_bath=self.tau, device=self.device)
-            * self.dt
-            / self.kn
-        )
+        collisions = np.zeros(state.q.shape)
+
+        for i in range(state.num_eqn):
+            collisions[i, :] = self.coll[i](
+                state.q[i, :], heat_bath=self.tau, device=self.device
+            )
+
+        return self.dt / self.kn * collisions
 
     def dq_hyperbolic(self, state):
-        r"""
+        """
         Compute dq/dt * (delta t) for the hyperbolic hyperbolic system.
 
         Note that the capa array, if present, should be located in the aux
@@ -748,12 +754,12 @@ class BoltzmannSolver1D(BoltzmannSolver):
          0     1     2     3     4     mx+num_ghost-2     mx+num_ghost      mx+num_ghost+2
                      |                        mx+num_ghost-1 |  mx+num_ghost+1
          |     |     |     |     |   ...   |     |     |     |     |
-            0     1  |  2     3            mx+num_ghost-2    |mx+num_ghost       
+            0     1  |  2     3            mx+num_ghost-2    |mx+num_ghost
                                                   mx+num_ghost-1   mx+num_ghost+1
 
         The top indices represent the values that are located on the grid
-        cell boundaries such as waves, s and other Riemann problem values, 
-        the bottom for the cell centered values such as q.  In particular
+        cell boundaries such as waves, s and other Riemann problem values,
+        the bottom for the cell centered values such as q.  In particular·
         the ith grid cell boundary has the following related information::
 
                           i-1         i         i+1
@@ -771,24 +777,24 @@ class BoltzmannSolver1D(BoltzmannSolver):
         aux = self.auxbc
 
         grid = state.grid
-        # mx = grid.num_cells[0]
+        mx = grid.num_cells[0]
 
-        dtdx = np.zeros(q.shape)
+        dtdx = np.zeros(
+            (mx + 2 * self.num_ghost,) + (1,) * len(state.num_vnodes)
+        )
         dq = np.zeros(q.shape)
 
         # Find local value for dt/dx
-        if state.index_capa >= 0:
-            dtdx = self.dt / (grid.delta[0] * aux[..., state.index_capa])
-        else:
-            dtdx += self.dt / grid.delta[0]
+        dtdx += self.dt / grid.delta[0]
 
-        if aux.shape[-1] > 0:
-            aux_l = aux[:-1]
-            aux_r = aux[1:]
+        if aux.shape[0] > 0:
+            aux_l = aux[:, :-1]
+            aux_r = aux[:, 1:]
         else:
             aux_l = None
             aux_r = None
 
+        ql, qr = None, None
         # Reconstruct (wave reconstruction uses a Riemann solve)
         if self.lim_type == -1:  # 1st-order Godunov
             ql = q
@@ -803,8 +809,8 @@ class BoltzmannSolver1D(BoltzmannSolver):
             if self.char_decomp == 0:  # No characteristic decomposition
                 ql, qr = recon.weno(5, q)
             elif self.char_decomp == 1:  # Wave-based reconstruction
-                q_l = q[:-1]
-                q_r = q[1:]
+                q_l = q[:, :-1]
+                q_r = q[:, 1:]
                 wave, s, amdq, apdq = self.rp(
                     q_l, q_r, aux_l, aux_r, state.problem_data
                 )
@@ -813,8 +819,8 @@ class BoltzmannSolver1D(BoltzmannSolver):
                 raise NotImplementedError
 
         # Solve Riemann problem at each interface
-        q_l = qr[:-1]
-        q_r = ql[1:]
+        q_l = qr[:, :-1]
+        q_r = ql[:, 1:]
         wave, s, amdq, apdq = self.rp(
             q_l, q_r, aux_l, aux_r, state.problem_data
         )
@@ -825,39 +831,53 @@ class BoltzmannSolver1D(BoltzmannSolver):
         UL = grid.num_cells[0] + self.num_ghost + 1
 
         # Compute dq for Godunov update
-        dq[LL:UL] = -dtdx[LL:UL] * (amdq[LL:UL] + apdq[LL - 1 : UL - 1])
+        for m in range(state.num_eqn):
+            dq[m, LL:UL] = -dtdx[LL:UL] * (
+                amdq[m, LL:UL] + apdq[m, LL - 1 : UL - 1]
+            )
 
         # Compute maximum wave speed
         cfl = 0.0
-        smax1 = np.max(dtdx[LL:UL] * s)
-        smax2 = np.max(-dtdx[LL - 1 : UL - 1] * s)
-        cfl = max(cfl, smax1, smax2)
+        for mw in range(self.num_waves):
+            smax1 = np.max(dtdx[LL:UL] * s[mw, :])
+            smax2 = np.max(-dtdx[LL - 1 : UL - 1] * s[mw, :])
+            cfl = max(cfl, smax1, smax2)
 
         if self.order == 2:
             # Initialize flux corrections
             f = np.zeros(q.shape)
             # Apply Limiters to waves
-            wave = tvd.limit(wave, s, self.limiter, dtdx)
+            wave = tvd.limit(state.num_eqn, wave, s, self.limiter, dtdx)
             # Compute correction fluxes for second order q_{xx} terms
             dtdxave = 0.5 * (dtdx[LL - 1 : UL - 1] + dtdx[LL:UL])
             if self.fwave:
-                sabs = np.abs(s)
-                om = 1.0 - sabs * dtdxave[: UL - LL]
-                ssign = np.sign(s)
-                f[LL:UL] += 0.5 * ssign * om * wave[LL - 1 : UL - 1]
+                for mw in range(wave.shape[1]):
+                    sabs = np.abs(s[mw, :])  # (num_waves, 1, num_vnodes)
+                    om = 1.0 - sabs * dtdxave[: UL - LL]  # (mx, num_vnodes)
+                    ssign = np.sign(s[mw, :])
+                    for m in range(state.num_eqn):
+                        f[m, LL:UL] += (
+                            0.5 * ssign * om * wave[m, mw, LL - 1 : UL - 1]
+                        )
             else:
-                sabs = np.abs(s)
-                om = 1.0 - sabs * dtdxave[: UL - LL]
-                f[LL:UL] += 0.5 * sabs * om * wave[LL - 1 : UL - 1]
+                for mw in range(wave.shape[1]):
+                    sabs = np.abs(s[mw, :])
+                    om = 1.0 - sabs * dtdxave[: UL - LL]
+                    for m in range(state.num_eqn):
+                        f[m, LL:UL] += (
+                            0.5 * sabs * om * wave[m, mw, LL - 1 : UL - 1]
+                        )
 
-            dq[LL : UL - 1] -= dtdx[LL : UL - 1] * (
-                f[LL + 1 : UL] - f[LL : UL - 1]
-            )
+            for m in range(state.num_eqn):
+                dq[m, LL : UL - 1] -= dtdx[LL : UL - 1] * (
+                    f[m, LL + 1 : UL] - f[m, LL : UL - 1]
+                )
 
         # Find total fluctuation within each cell
         wave, s, amdq2, apdq2 = self.rp(ql, qr, aux, aux, state.problem_data)
         # Update dq
-        dq[LL:UL] -= dtdx[LL:UL] * (apdq2[LL:UL] + amdq2[LL:UL])
+        for m in range(state.num_eqn):
+            dq[m, LL:UL] -= dtdx[LL:UL] * (apdq2[m, LL:UL] + amdq2[m, LL:UL])
 
         self.cfl.update_global_max(cfl)
-        return dq[self.num_ghost : -self.num_ghost]
+        return dq[:, self.num_ghost : -self.num_ghost]

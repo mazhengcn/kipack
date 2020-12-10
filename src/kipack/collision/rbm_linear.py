@@ -1,6 +1,5 @@
 import cupy as cp
 import numpy as np
-
 from kipack.collision.base import BaseCollision
 
 
@@ -35,7 +34,8 @@ class RandomBatchLinearCollision(BaseCollision):
         idx = self._random_batch(xp)
         # print(idx)
         return (
-            self.nv * 0.5 ** (self.ndim) * f[..., idx] * self.weights[idx] - f
+            self.nv * 0.5 ** (self.num_dim) * f[..., idx] * self.weights[idx]
+            - f
         )
 
     def perform_precomputation(self):
@@ -55,5 +55,6 @@ class SymmetricRBMLinearCollision(RandomBatchLinearCollision):
         f = input_f
         idx = self._random_batch(xp)
         return (
-            self.nv * 0.5 ** (self.ndim) * f[..., idx] * self.weights[idx] - f
+            self.nv * 0.5 ** (self.num_dim) * f[..., idx] * self.weights[idx]
+            - f
         )

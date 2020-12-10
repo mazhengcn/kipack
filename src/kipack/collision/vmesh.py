@@ -2,7 +2,6 @@ import math
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-
 from kipack.collision.spherical_design import get_sphrquadrule
 
 
@@ -22,23 +21,15 @@ class BaseVMesh(object, metaclass=ABCMeta):
     @property
     def centers(self):
         if self._centers is None:
-            index = np.indices(self.nvs)
+            index = np.indices(self.num_nodes)
             self._centers = [
-                self.center[index[i, ...]] for i in range(self.ndim)
+                self.center[index[i, ...]] for i in range(self.num_dim)
             ]
         return self._centers
 
     @property
-    def ndim(self):
+    def num_dim(self):
         return self._ndim
-
-    @property
-    def nv(self):
-        return self._nv
-
-    @property
-    def nvs(self):
-        return [self.nv] * self.ndim
 
     @property
     def delta(self):
@@ -48,11 +39,11 @@ class BaseVMesh(object, metaclass=ABCMeta):
     def weights(self):
         if self._weights is not None:
             weights = 1.0
-            for _ in range(self.ndim):
+            for _ in range(self.num_dim):
                 weights = weights * self._weights
             return weights
         else:
-            return self.delta ** self.ndim * np.ones(self.nvs)
+            return self.delta ** self.num_dim * np.ones(self.shape)
 
     @property
     def vsquare(self):
@@ -142,6 +133,14 @@ class SpectralMesh(BaseVMesh):
         return self._center
 
     @property
+    def nv(self):
+        return self._nv
+
+    @property
+    def num_nodes(self):
+        return [self.nv] * self.num_dim
+
+    @property
     def ncirc_or_nsphr(self):
         if self.ndim == 2:
             return self._nphi
@@ -223,3 +222,11 @@ class CartesianMesh(BaseVMesh):
     @property
     def L(self):
         return (self.upper - self.lower) / 2
+
+    @property
+    def nv(self):
+        return self._nv
+
+    @property
+    def num_nodes(self):
+        return [self.nv] * self.num_dim

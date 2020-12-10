@@ -8,7 +8,6 @@ dependencies:
   - matplotlib
   - pip
   - pip:
-      - cupy-cuda102
+      - cupy-cuda111
       - pyfftw
-      # For config file
       - params-mz @ git+https://github.com/Mayuyu/params.git
