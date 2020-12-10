@@ -2,10 +2,9 @@ import copy
 import math
 
 import numpy as np
+from examples.utils import Progbar
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
-
-from utils import Progbar
 
 
 def phi(eps):
@@ -90,7 +89,7 @@ def run(
 ):
     # Load config
     config = collision.utils.CollisionConfig.from_json(
-        "./configs/" + "ap_linear" + ".json"
+        "./examples/linear_transport/configs/" + "parity" + ".json"
     )
 
     # Collision

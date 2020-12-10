@@ -2,9 +2,9 @@ import copy
 import math
 
 import numpy as np
+from examples.utils import Progbar
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
-from utils import Progbar
 
 
 class DiffusiveRegimeSolver1D(BoltzmannSolver1D):

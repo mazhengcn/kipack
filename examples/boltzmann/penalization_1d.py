@@ -2,10 +2,9 @@ import copy
 import math
 
 import numpy as np
+from examples.boltzmann.euler_1d import Euler1D
+from examples.utils import Progbar
 from kipack import collision, pykinetic
-
-from tests.euler_1d import Euler1D
-from utils import Progbar
 
 
 def maxwellian(v, rho, u, T):
@@ -116,7 +115,7 @@ rkcoeff = {
 
 def run(kn=1e-4, tau=None, p=5.0, dt=0.001, nt=100, scheme="Euler"):
     config = collision.utils.CollisionConfig.from_json(
-        "./configs/penalty.json"
+        "./examples/boltzmann/configs/penalty.json"
     )
     vmesh = collision.SpectralMesh(config)
     rp = pykinetic.riemann.advection_1D

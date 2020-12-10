@@ -2,9 +2,8 @@ import copy
 import math
 
 import numpy as np
+from examples.utils import Progbar
 from kipack import collision, pykinetic
-
-from utils import Progbar
 
 rkcoeff = {
     "RK3": {

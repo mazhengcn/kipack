@@ -2,10 +2,9 @@ import copy
 import math
 
 import numpy as np
-
-from euler_1d import Euler1D
+from examples.boltzmann.euler_1d import Euler1D
+from examples.utils import Progbar
 from kipack import collision, pykinetic
-from utils import Progbar
 
 
 def maxwellian(v, rho, u, T):

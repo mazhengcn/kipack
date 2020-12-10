@@ -55,14 +55,16 @@ class Progbar(object):
 
     def update(self, current, values=None, finalize=None):
         """Updates the progress bar.
-    Arguments:
-        current: Index of current step.
-        values: List of tuples: `(name, value_for_last_step)`. If `name` is in
-          `stateful_metrics`, `value_for_last_step` will be displayed as-is.
-          Else, an average of the metric over time will be displayed.
-        finalize: Whether this is the last update for the progress bar. If
-          `None`, defaults to `current >= self.target`.
-    """
+        Arguments:
+            current: Index of current step.
+            values: List of tuples: `(name, value_for_last_step)`.
+                If `name` is in
+              `stateful_metrics`, `value_for_last_step` will be displayed
+              as-is. Else, an average of the metric over time will be
+              displayed.
+            finalize: Whether this is the last update for the progress bar. If
+              `None`, defaults to `current >= self.target`.
+        """
         if finalize is None:
             if self.target is None:
                 finalize = False

@@ -4,7 +4,7 @@ import math
 import numpy as np
 from kipack import collision, pykinetic
 
-from utils import Progbar
+from ..utils import Progbar
 
 
 class PenalizationSolver0D(pykinetic.BoltzmannSolver0D):
