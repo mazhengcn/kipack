@@ -134,7 +134,7 @@ def run(
 ):
     # Load config
     config = collision.utils.CollisionConfig.from_json(
-        "./configs/" + "linear" + ".json"
+        "./examples/linear_transport/configs/" + "linear" + ".json"
     )
 
     # Collision
@@ -151,7 +151,7 @@ def run(
         )
 
     # x domian
-    x = pykinetic.Dimension(0.0, 1.0, 100, name="x")
+    x = pykinetic.Dimension(0.0, 1.0, 40, name="x")
     domain = pykinetic.Domain([x])
 
     # Riemann solver
@@ -159,7 +159,7 @@ def run(
     solver = DiffusiveRegimeSolver1D(
         rp, coll_op, kn=kn / sigma(x.centers)[:, None]
     )
-    solver.order = 2
+    solver.order = 1
     # solver.lim_type = 2
     # Time integrator
     if "RK" in scheme:

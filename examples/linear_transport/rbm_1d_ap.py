@@ -113,7 +113,7 @@ def run(
     rp = pykinetic.riemann.parity_1D
     solver = APNeutronTransportSolver1D(rp, [coll_op], kn=kn)
     # print(solver.kn)
-    solver.order = 2
+    solver.order = 1
     # solver.lim_type = -1
     solver.time_integrator = scheme
     solver.dt = dt
@@ -162,7 +162,6 @@ def run(
     state.problem_data["v"] = vmesh.centers
     state.problem_data["phi"] = phi(kn)
     state.problem_data["sqrt_phi"] = np.sqrt(phi(kn))
-    print(state.grid.delta[0])
 
     qinit(state, vmesh, kn, init_func)
     sol = pykinetic.Solution(state, domain)

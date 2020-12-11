@@ -43,7 +43,7 @@ class BaseVMesh(object, metaclass=ABCMeta):
                 weights = weights * self._weights
             return weights
         else:
-            return self.delta ** self.num_dim * np.ones(self.shape)
+            return self.delta ** self.num_dim * np.ones(self.num_nodes)
 
     @property
     def vsquare(self):
