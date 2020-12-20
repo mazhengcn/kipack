@@ -402,6 +402,7 @@ class BoltzmannSolver(Solver):
         )
 
     def ssp104(self, state):
+        s1 = None
         if self.time_integrator == "SSP104":
             s1 = self._registers[0]
             s1.q[:] = state.q
@@ -696,9 +697,8 @@ class BoltzmannSolver(Solver):
 
 
 class BoltzmannSolver0D(BoltzmannSolver):
-    def __init__(self, collision_operator=None, **kwargs):
-
-        self.kn = kwargs.get("kn", 1.0)
+    def __init__(self, collision_operator=None, kn=1.0, **kwargs):
+        self.kn = kn
         self.tau = kwargs.get("heat_bath", None)
         self.device = kwargs.get("device", "gpu")
 
@@ -709,24 +709,21 @@ class BoltzmannSolver0D(BoltzmannSolver):
         )
 
     def dq_collision(self, state):
-        collisions = []
-        for i in range(len(self.coll)):
-            collisions.append(
-                self.coll[i](
-                    state.q[i, ...], heat_bath=self.tau, device=self.device
-                )
-                * self.dt
-                / self.kn
+        collisions = np.zeros(state.q.shape)
+        for i in range(state.num_eqn):
+            collisions[i, :] = self.coll[i](
+                state.q[i, :], heat_bath=self.tau, device=self.device
             )
-        return collisions
+        return collisions * self.dt / self.kn
 
 
 class BoltzmannSolver1D(BoltzmannSolver):
-    def __init__(self, riemann_solver=None, collision_operator=None, **kwargs):
-
-        self.kn = kwargs.get("kn", 1.0)
+    def __init__(
+        self, riemann_solver=None, collision_operator=None, kn=1.0, **kwargs
+    ):
         self.tau = kwargs.get("heat_bath", None)
         self.device = kwargs.get("device", "gpu")
+        self.kn = self._convert_params(kn)
 
         self.num_dim = 1
 
@@ -734,13 +731,12 @@ class BoltzmannSolver1D(BoltzmannSolver):
 
     def dq_collision(self, state):
         collisions = np.zeros(state.q.shape)
-
         for i in range(state.num_eqn):
             collisions[i, :] = self.coll[i](
                 state.q[i, :], heat_bath=self.tau, device=self.device
             )
 
-        return self.dt / self.kn * collisions
+        return collisions * self.dt / self.kn
 
     def dq_hyperbolic(self, state):
         """
@@ -881,3 +877,9 @@ class BoltzmannSolver1D(BoltzmannSolver):
 
         self.cfl.update_global_max(cfl)
         return dq[:, self.num_ghost : -self.num_ghost]
+
+    def _convert_params(self, param):
+        if isinstance(param, np.ndarray):
+            return param[:, None]
+        else:
+            return param

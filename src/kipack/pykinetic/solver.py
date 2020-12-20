@@ -722,7 +722,7 @@ class Solver(object):
                     % (n, cfl, self.dt, solution.t)
                 )
 
-                self.write_gauge_values(solution)
+                # self.write_gauge_values(solution)
                 # Increment number of time steps completed
                 num_steps += 1
                 self.status["numsteps"] += 1
@@ -764,43 +764,3 @@ class Solver(object):
         would like to use the default time-stepping in evolve_to_time.
         """
         raise NotImplementedError("No stepping routine has been defined!")
-
-    # ========================================================================
-    #  Gauges
-    # ========================================================================
-    def write_gauge_values(self, solution):
-        """Write solution (or derived quantity) values at each gauge coordinate
-        to file.
-        """
-        import numpy as np
-
-        if solution.num_aux == 0:
-            aux = None
-        for i, gauge in enumerate(solution.state.grid.gauges):
-            if self.num_dim == 1:
-                ix = gauge[0]
-                if solution.num_aux:
-                    aux = solution.state.aux[:, ix]
-                q = solution.state.q[:, ix]
-            elif self.num_dim == 2:
-                ix, iy = gauge
-                if solution.aux_shape:
-                    aux = solution.state.aux[:, ix, iy]
-                q = solution.state.q[:, ix, iy]
-            p = self.compute_gauge_values(q, aux)
-            if not hasattr(p, "__iter__"):
-                p = [p]
-            t = solution.t
-            if solution.state.keep_gauges:
-                gauge_data = solution.state.gauge_data
-                if len(gauge_data) == len(solution.state.grid.gauges):
-                    gauge_data[i] = np.vstack((gauge_data[i], np.append(t, p)))
-                else:
-                    gauge_data.append(np.append(t, p))
-
-            try:
-                solution.state.grid.gauge_files[i].write(
-                    str(t) + " " + " ".join(str(j) for j in p) + "\n"
-                )
-            except IOError:
-                raise Exception("Gauge files are not set up correctly.")
