@@ -6,8 +6,8 @@ dependencies:
   - numpy
   - scipy
   - matplotlib
+  - pyfftw
+  - cupy
   - pip
   - pip:
-      - cupy-cuda111
-      - pyfftw
       - params-mz @ git+https://github.com/Mayuyu/params.git
