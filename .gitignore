@@ -1,6 +1,6 @@
 # Project related
 .vscode/
-configs/
+# configs/
 data/
 figs/
 # notebooks/

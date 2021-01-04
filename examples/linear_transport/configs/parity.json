@@ -1,0 +1,13 @@
+{
+  "collision_model": {
+    "dim": 1,
+    "e": 1,
+    "gamma": 0
+  },
+  "velocity_mesh": {
+    "nv": 100,
+    "quad_rule": "uniform",
+    "lower": 0.0,
+    "upper": 1.0
+  }
+}
