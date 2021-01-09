@@ -1,0 +1,10 @@
+six
+dataclasses
+typing
+pyyaml
+numpy
+scipy
+matplotlib
+pyfftw
+cupy-cuda111
+params-mz @ git+https://github.com/Mayuyu/params.git

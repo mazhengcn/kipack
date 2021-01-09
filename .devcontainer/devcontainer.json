@@ -1,0 +1,58 @@
+{
+  // A name to show for the workspace folder.
+  "name": "kipack",
+
+  // Context to build image or create container.
+  "context": "..",
+
+  "dockerFile": "Dockerfile",
+  // "image": "zhengma/kipack:latest",
+
+  // Set *default* container specific settings.json values on container create.
+  "settings": {
+    "terminal.integrated.shell.linux": "/usr/bin/bash",
+    "python.pythonPath": "/usr/local/python3.8.7/bin/python",
+    "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+    "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+    "python.sortImports.path": "/usr/local/py-utils/bin/isort"
+  },
+
+  // Add the IDs of extensions you want installed when the container is created.
+  "extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "yummygum.city-lights-icon-vsc"
+  ],
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  "forwardPorts": [8890],
+
+  // Use 'postCreateCommand' to run commands after the container is created.
+  "postCreateCommand": "pip install --user -e .",
+
+  // Use 'postStartCommand' to run commands after the container is started.
+  "postStartCommand": "jupyter lab ./examples/notebooks --no-browser --ip=127.0.0.1 --port=8890 &> /dev/null &",
+
+  // Uncomment when using a ptrace-based debugger like C++, Go, and Rust
+  "runArgs": [
+    "--name",
+    "kipack",
+    // Uncomment this to enable Nvidia support
+    "--gpus",
+    "all"
+  ],
+
+  // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
+  "remoteUser": "vscode",
+
+  // Bind mount working directory
+  "workspaceMount": "source=/home/zheng/repositories/kipack,target=/home/vscode/kipack,type=bind,consistency=cached",
+
+  // Default working directory
+  "workspaceFolder": "/home/vscode/kipack",
+
+  // Keep container running after disconnect
+  "shutdownAction": "none"
+}
