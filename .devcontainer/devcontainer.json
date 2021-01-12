@@ -1,12 +1,9 @@
 {
   // A name to show for the workspace folder.
   "name": "kipack",
-
-  // Context to build image or create container.
-  "context": "..",
-
-  "dockerFile": "Dockerfile",
-  // "image": "zhengma/kipack:latest",
+  
+  // Image used for the container
+  "image": "kipack:devel",
 
   // Set *default* container specific settings.json values on container create.
   "settings": {
