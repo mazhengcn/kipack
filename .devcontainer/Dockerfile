@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.1-runtime-ubuntu20.04
+FROM nvcr.io/nvidia/cuda:11.1-runtime-ubuntu20.04
 RUN rm -rf /etc/apt/sources.list.d/cuda.list /etc/apt/sources.list.d/nvidia-ml.list
 
 # [Option] Install zsh
