@@ -9,7 +9,7 @@
   },
   // Set *default* container specific settings.json values on container create.
   "settings": {
-    // "terminal.integrated.shell.linux": "/usr/bin/bash",
+    "terminal.integrated.shell.linux": "/usr/bin/zsh",
     "python.pythonPath": "/usr/local/bin/python",
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": false,
@@ -23,8 +23,7 @@
     "ms-python.python",
     "ms-python.vscode-pylance",
     "eamodio.gitlens",
-    "esbenp.prettier-vscode",
-    "yummygum.city-lights-icon-vsc"
+    "esbenp.prettier-vscode"
   ],
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.

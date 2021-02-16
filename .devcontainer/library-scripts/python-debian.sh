@@ -109,7 +109,6 @@ DEFAULT_UTILS="\
     mypy \
     pydocstyle \
     pycodestyle \
-    isort \
     bandit \
     pipenv \
     virtualenv"
