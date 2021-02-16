@@ -19,7 +19,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
 # Setup default python tools in a venv via pipx to avoid conflicts
-ARG PYTHON_PATH=/usr/local/python
+ARG PYTHON_PATH=/usr/local
 ENV PIPX_HOME=/usr/local/py-utils \
     PIPX_BIN_DIR=/usr/local/py-utils/bin
 ENV PATH=${PYTHON_PATH}/bin:${PATH}:${PIPX_BIN_DIR}
