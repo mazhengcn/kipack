@@ -1,6 +1,3 @@
-r"""
-Module specifying the interface to every solver in PyClaw.
-"""
 from __future__ import absolute_import
 
 import logging
@@ -43,107 +40,6 @@ def before_step(solver, solution):
 
 
 class Solver(object):
-    """
-    PyKinetic solver superclass.
-
-    The pykinetic.Solver.solver class is an abstract class that should
-    not be instantiated; rather, all Solver classes should inherit from it.
-
-    Solver initialization takes one argument -- a Riemann solver:
-
-        >>> from pykinetic import riemann
-        >>> solver = pykinetic.ClawSolver2D(riemann.euler_4wave_2D)
-
-    after which solver options may be set.
-    It is necessary to set the boundary conditions (for q, and
-    for aux if an aux array is used):
-
-        >>> solver.bc_lower[0] = pykinetic.BC.extrap
-        >>> solver.bc_upper[0] = pykinetic.BC.wall
-
-    Many other options may be set
-    for specific solvers; for instance the limiter to be used, whether to
-    use a dimensionally-split algorithm, and so forth.
-
-    .. attribute:: dt
-
-        Current time step, ``default = 0.1``
-
-    .. attribute:: cfl
-
-        Current Courant-Freidrichs-Lewy number, ``default = 1.0``
-
-    .. attribute:: status
-
-        Dictionary of status values for the solver with the following keys:
-         - ``cflmax`` = Maximum CFL number
-         - ``dtmin`` = Minimum time step taken
-         - ``dtmax`` = Maximum time step taken
-         - ``numsteps`` = Total number of time steps that have been taken
-
-        solver.status is returned by solver.evolve_to_time.
-
-    .. attribute:: before_step
-
-        Function called before each time step is taken.
-        The required signature for this function is:
-
-        def before_step(solver,solution)
-
-    .. attribute:: dt_variable
-
-        Whether to allow the time step to vary, ``default = True``.
-        If false, the initial time step size is used for all steps.
-
-    .. attribute:: max_steps
-
-        The maximum number of time steps allowd to reach the end time
-        requested, ``default = 10000``.  If exceeded, an exception is
-        raised.
-
-    .. attribute:: logger
-
-        Default logger for all solvers.  Records information about the run
-        and debugging messages (if requested).
-
-    .. attribute:: bc_lower
-
-        (list of ints) Lower boundary condition types, listed in the
-        same order as the Dimensions of the Patch.  See Solver.BC for
-        an enumeration.
-
-    .. attribute:: bc_upper
-
-        (list of ints) Upper boundary condition types, listed in the
-        same order as the Dimensions of the Patch.  See Solver.BC for
-        an enumeration.
-
-    .. attribute:: user_bc_lower
-
-        (func) User defined lower boundary condition.
-        Fills the values of qbc with the correct boundary values.
-        The appropriate signature is:
-
-        def user_bc_lower(patch,dim,t,qbc,num_ghost):
-
-    .. attribute:: user_bc_upper
-
-        (func) User defined upper boundary condition.
-        Fills the values of qbc with the correct boundary values.
-        The appropriate signature is:
-
-        def user_bc_upper(patch,dim,t,qbc,num_ghost):
-
-
-    :Initialization:
-
-    Output:
-     - (:class:`Solver`) - Initialized Solver object
-    """
-
-    #  ======================================================================
-    #   Initialization routines
-    #  ======================================================================
     def __init__(self, riemann_solver=None, collision_operator=None):
         """
         Initialize a Solver object
@@ -163,7 +59,6 @@ class Solver(object):
         self.rp = None
         self.fmod = None
         self._is_set_up = False
-        self._use_old_bc_sig = False
         self.accept_step = True
         self.before_step = None
 
@@ -200,8 +95,7 @@ class Solver(object):
         at gauges"""
 
         self.qbc = None
-        """ Array to hold ghost cell values.  This is the one that gets passed
-        to the Fortran code.  """
+        """ Array to hold ghost cell values."""
 
         if riemann_solver is not None:
             self.rp = riemann_solver
@@ -319,22 +213,6 @@ class Solver(object):
 
         This is typically called by solver.setup().
         """
-        import inspect
-
-        for fun in (
-            self.user_bc_lower,
-            self.user_bc_upper,
-            self.user_aux_bc_lower,
-            self.user_aux_bc_upper,
-        ):
-            if fun is not None:
-                args = inspect.getargspec(fun)[0]
-                if len(args) == 5:
-                    self.logger.warn(
-                        """The custom boundary condition
-                                        function signature has been changed."""
-                    )
-                    self._use_old_bc_sig = True
 
         qbc_dim = [n + 2 * self.num_ghost for n in state.grid.num_cells]
         qbc_dim.insert(0, state.num_eqn)
@@ -349,24 +227,6 @@ class Solver(object):
         self._apply_bcs(state)
 
     def _apply_bcs(self, state):
-        """
-        Apply boundary conditions to both q and aux arrays.
-
-        In the case of a user-defined boundary condition, both arrays
-        qbc and auxbc are passed to the user function.  Typically the
-        function would only modify one or the other of them, though this
-        is not enforced.
-
-        If the user function only accepts one array argument, we warn
-        that this interface has been deprecated.  In Clawpack 6, we will
-        drop backward compatibility.
-
-        For parallel runs, we check whether we're actually on a domain
-        boundary.  If we are just at an inter-patch boundary, nothing needs to
-        be done here.
-        """
-
-        import numpy as np
 
         self.qbc = state.get_qbc_from_q(self.num_ghost, self.qbc)
         if state.num_aux > 0:
@@ -397,32 +257,20 @@ class Solver(object):
                     }
                 )
                 for (i, bc) in enumerate(bcs):
-
                     if bc["type"][idim] == BC.custom:
-                        if not self._use_old_bc_sig:
-                            bc["custom_fun"](
-                                state,
-                                dim,
-                                state.t,
-                                self.qbc,
-                                self.auxbc,
-                                self.num_ghost,
-                            )
-                        else:
-                            bc["custom_fun"](
-                                state,
-                                dim,
-                                state.t,
-                                bc["array"],
-                                self.num_ghost,
-                            )
-
+                        bc["custom_fun"](
+                            state,
+                            dim,
+                            state.t,
+                            self.qbc,
+                            self.auxbc,
+                            self.num_ghost,
+                        )
                     elif (
                         bc["type"][idim] == BC.periodic
                         and not state.grid.on_upper_boundary[idim]
                     ):
                         pass
-
                     else:
                         self._bc_lower(
                             bc["type"][idim],
@@ -435,7 +283,6 @@ class Solver(object):
                         )
 
             if state.grid.on_upper_boundary[idim]:
-
                 bcs = []
                 if state.num_aux > 0:
                     bcs.append(
@@ -455,32 +302,20 @@ class Solver(object):
                     }
                 )
                 for (i, bc) in enumerate(bcs):
-
                     if bc["type"][idim] == BC.custom:
-                        if not self._use_old_bc_sig:
-                            bc["custom_fun"](
-                                state,
-                                dim,
-                                state.t,
-                                self.qbc,
-                                self.auxbc,
-                                self.num_ghost,
-                            )
-                        else:
-                            bc["custom_fun"](
-                                state,
-                                dim,
-                                state.t,
-                                bc["array"],
-                                self.num_ghost,
-                            )
-
+                        bc["custom_fun"](
+                            state,
+                            dim,
+                            state.t,
+                            self.qbc,
+                            self.auxbc,
+                            self.num_ghost,
+                        )
                     elif (
                         bc["type"][idim] == BC.periodic
                         and not state.grid.on_lower_boundary[idim]
                     ):
                         pass
-
                     else:
                         self._bc_upper(
                             bc["type"][idim],

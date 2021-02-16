@@ -25,18 +25,23 @@ class RandomBatchLinearCollision(BaseCollision):
         self.weights = self._cpu_weights
 
     def _random_batch(self, xp):
-        idx = xp.random.randint(self.nv, size=self.nv)
+        idx = xp.random.randint(self.nv, size=(self.nv,) * self.num_dim)
         return idx
 
     def collide(self, input_f):
         xp = cp.get_array_module(input_f)
         f = input_f
         idx = self._random_batch(xp)
-        # print(idx)
-        return (
-            self.nv * 0.5 ** (self.num_dim) * f[..., idx] * self.weights[idx]
-            - f
-        )
+        if self.num_dim == 1:
+            f_batch = f[..., idx]
+            weights_batch = self.nv * self.weights[idx]
+        elif self.num_dim == 2:
+            f_batch = f[..., idx, idx]
+            weights_batch = self.nv * self.weights[idx, idx]
+        else:
+            raise ValueError("Only dimension 1 and 2 are implemented.")
+
+        return f_batch * weights_batch - f
 
     def perform_precomputation(self):
         pass
@@ -54,7 +59,4 @@ class SymmetricRBMLinearCollision(RandomBatchLinearCollision):
         xp = cp.get_array_module(input_f)
         f = input_f
         idx = self._random_batch(xp)
-        return (
-            self.nv * 0.5 ** (self.num_dim) * f[..., idx] * self.weights[idx]
-            - f
-        )
+        return self.nv ** (self.num_dim) * f[..., idx] * self.weights[idx] - f

@@ -16,7 +16,7 @@ class BaseVMesh(object, metaclass=ABCMeta):
         self._centers = None
         self._weights = None
         # Construct the velocity mesh
-        self._construct_velocity_mesh()
+        self._build_velocity_mesh()
 
     @property
     def centers(self):
@@ -34,16 +34,6 @@ class BaseVMesh(object, metaclass=ABCMeta):
     @property
     def delta(self):
         return 2 * self.L / self.nv
-
-    @property
-    def weights(self):
-        if self._weights is not None:
-            weights = 1.0
-            for _ in range(self.num_dim):
-                weights = weights * self._weights
-            return weights
-        else:
-            return self.delta ** self.num_dim * np.ones(self.num_nodes)
 
     @property
     def vsquare(self):
@@ -71,7 +61,7 @@ class BaseVMesh(object, metaclass=ABCMeta):
         return [rho, u, T]
 
     @abstractmethod
-    def _construct_velocity_mesh(self):
+    def _build_velocity_mesh(self):
         pass
 
 
@@ -82,9 +72,9 @@ class SpectralMesh(BaseVMesh):
         self._load_radial_quadrature()
         # Construct the integration mesh on a circle (2D) or sphere (3D)
         if self._ndim == 2:
-            self._construct_polar_mesh()
+            self._build_polar_mesh()
         elif self._ndim == 3:
-            self._construct_spherical_mesh()
+            self._build_spherical_mesh()
         else:
             raise ValueError("Dimension must be 2 or 3.")
 
@@ -95,7 +85,7 @@ class SpectralMesh(BaseVMesh):
         self._r = 0.5 * (r + 1) * self._R
         self._wr = 0.5 * self._R * wr
 
-    def _construct_velocity_mesh(self):
+    def _build_velocity_mesh(self):
         # Define the velocity mesh for 2D and 3D
         self._nv = self.config.nv
         print("Number of velocity cells: {}.".format(self._nv))
@@ -109,13 +99,13 @@ class SpectralMesh(BaseVMesh):
         self._L = 0.5 * (3.0 + math.sqrt(2)) * self._S
         print("Velocity domain: [{}, {}].".format(-self._L, self._L))
 
-    def _construct_polar_mesh(self):
+    def _build_polar_mesh(self):
         # Number of points on the circle
         self._nphi = self.config.nphi
         self._wphi = 2 * math.pi / self._nphi
         self._phi = np.arange(0, 2 * math.pi, self._wphi)
 
-    def _construct_spherical_mesh(self):
+    def _build_spherical_mesh(self):
         self._ssrule = self.config.ssrule
         self._nsphr = self.config.nsphr
         srule = get_sphrquadrule(
@@ -179,9 +169,6 @@ class SpectralMesh(BaseVMesh):
 
 
 class CartesianMesh(BaseVMesh):
-    def __init__(self, config, *args, **kwargs) -> None:
-        super().__init__(config, *args, **kwargs)
-
     def _load_quadrature(self):
         quad_rule = self.config.quad_rule
         v_quads = {"legendre": np.polynomial.legendre.leggauss}
@@ -189,7 +176,7 @@ class CartesianMesh(BaseVMesh):
         self._center = self.L * v + 0.5 * (self.lower + self.upper)
         self._weights = self.L * wv
 
-    def _construct_velocity_mesh(self):
+    def _build_velocity_mesh(self):
         # Define the velocity mesh for 2D and 3D
         self._nv = self.config.nv
         print("Number of velocity cells: {}.".format(self._nv))
@@ -211,6 +198,18 @@ class CartesianMesh(BaseVMesh):
         return self._center
 
     @property
+    def weights(self):
+        if self._weights is not None:
+            weights = 1.0
+            for _ in range(self.num_dim):
+                weights = weights * self._weights / (2 * self.L)
+            return weights
+        else:
+            return (self.delta / (2 * self.L)) ** self.num_dim * np.ones(
+                self.num_nodes
+            )
+
+    @property
     def lower(self):
         return self._lower
 
@@ -230,3 +229,67 @@ class CartesianMesh(BaseVMesh):
     @property
     def num_nodes(self):
         return [self.nv] * self.num_dim
+
+
+class PolarMesh(BaseVMesh):
+    def _build_velocity_mesh(self):
+        self._nv = self.config.nv
+        print("Number of velocity cells: {}.".format(self._nv))
+
+        # Define the phsical domain
+        self._radius = self.config.radius
+        self._lower = self.config.lower
+        self._upper = self.config.upper
+
+        if self._ndim == 2:
+            print("Velocity domain: disk with raidus {}.".format(self._radius))
+            self._build_polar_mesh()
+        else:
+            raise ValueError(
+                "Only polar coordinate systme is implemented currently."
+            )
+
+    def _build_polar_mesh(self):
+        self._wphi = (self._upper - self._lower) / self._nv
+        self._phi = np.arange(self._lower, self._upper, self._wphi)
+
+    @property
+    def centers(self):
+        if self._centers is None:
+            self._centers = np.meshgrid(
+                self._radius * np.cos(self.center),
+                self._radius * np.sin(self.center),
+            )
+        return self._centers
+
+    @property
+    def center(self):
+        return self._phi
+
+    @property
+    def lower(self):
+        return self._lower
+
+    @property
+    def upper(self):
+        return self._upper
+
+    @property
+    def L(self):
+        return (self.upper - self.lower) / 2
+
+    @property
+    def nv(self):
+        return self._nv
+
+    @property
+    def num_nodes(self):
+        return [self.nv] * self.num_dim
+
+    @property
+    def delta(self):
+        return self._wphi
+
+    @property
+    def weights(self):
+        return (self.delta / (2 * self.L)) * np.eye(*self.num_nodes)

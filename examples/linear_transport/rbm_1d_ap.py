@@ -65,7 +65,7 @@ class APNeutronTransportSolver1D(BoltzmannSolver1D):
         rho = (
             self.coll[0](state.q[0, :], heat_bath=self.tau, device=self.device)
             + state.q[0, :]
-        ) * 2
+        )
         state.q[0, :] = (dt_kn2 * self.sigma_s * rho + state.q[0, :]) / (
             1.0 + dt_kn2 * self.sigma_s
         )

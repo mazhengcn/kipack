@@ -1,14 +1,18 @@
 {
   // A name to show for the workspace folder.
   "name": "kipack",
-  
-  // Image used for the container
-  "image": "kipack:devel",
 
+  // Image used for the container
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
   // Set *default* container specific settings.json values on container create.
   "settings": {
-    "terminal.integrated.shell.linux": "/usr/bin/bash",
-    "python.pythonPath": "/usr/local/python3.8.7/bin/python",
+    // "terminal.integrated.shell.linux": "/usr/bin/bash",
+    "python.pythonPath": "/usr/local/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
     "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
     "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
     "python.sortImports.path": "/usr/local/py-utils/bin/isort"

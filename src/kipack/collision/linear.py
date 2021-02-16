@@ -27,11 +27,7 @@ class LinearCollision(BaseCollision):
         f = input_f
         vaxis = tuple(-(i + 1) for i in range(self.num_dim))
 
-        return (
-            0.5 ** (self.num_dim)
-            * xp.sum(f * self.weights, axis=vaxis, keepdims=True)
-            - f
-        )
+        return xp.sum(f * self.weights, axis=vaxis, keepdims=True) - f
 
     def perform_precomputation(self):
         pass
