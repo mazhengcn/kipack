@@ -59,7 +59,7 @@ export DEBIAN_FRONTEND=noninteractive
 # Install python from source if needed
 if [ "${PYTHON_VERSION}" != "none" ]; then
 
-    if [ -d "${PYTHON_INSTALL_PATH}/bin/python" ]; then
+    if [ -d "${PYTHON_INSTALL_PATH}" ]; then
         echo "Path ${PYTHON_INSTALL_PATH} already exists. Assuming Python already installed."
     else
         echo "Building Python ${PYTHON_VERSION} from source..."
@@ -109,9 +109,9 @@ DEFAULT_UTILS="\
     mypy \
     pydocstyle \
     pycodestyle \
-    isort \
     bandit \
     pipenv \
+    isort \
     virtualenv"
 
 
