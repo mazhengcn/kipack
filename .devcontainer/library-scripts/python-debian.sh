@@ -112,7 +112,8 @@ DEFAULT_UTILS="\
     bandit \
     pipenv \
     isort \
-    virtualenv"
+    virtualenv \
+    wheel"
 
 
 export PIPX_BIN_DIR=${PIPX_HOME}/bin
