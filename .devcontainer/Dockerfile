@@ -19,17 +19,17 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 
 # Setup default python tools in a venv via pipx to avoid conflicts
-ARG PYTHON_PATH=/usr/local/python
+ARG PYTHON_PATH=/usr/local/python3.8.7
 ENV PIPX_HOME=/usr/local/py-utils \
     PIPX_BIN_DIR=/usr/local/py-utils/bin
 ENV PATH=${PYTHON_PATH}/bin:${PATH}:${PIPX_BIN_DIR}
 COPY .devcontainer/library-scripts/python-debian.sh /tmp/library-scripts/
-RUN bash /tmp/library-scripts/python-debian.sh "3.9.2" "${PYTHON_PATH}" "${PIPX_HOME}" "${USERNAME}" \ 
+RUN bash /tmp/library-scripts/python-debian.sh "3.8.7" "${PYTHON_PATH}" "${PIPX_HOME}" "${USERNAME}" \ 
     && apt-get clean -y && rm -rf /tmp/library-scripts
 
 COPY requirements.txt /tmp/pip-tmp/
-RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt \
+RUN pip --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt \
     && rm -rf /tmp/pip-tmp
 
-RUN pip3 --disable-pip-version-check --no-cache-dir install jupyterlab \
+RUN pip --disable-pip-version-check --no-cache-dir install jupyterlab \
     && rm -rf /tmp/*
