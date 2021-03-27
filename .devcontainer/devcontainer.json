@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.158.0/containers/python-3
 {
-  "name": "Kipack",
+  "name": "kipack",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
@@ -26,7 +26,7 @@
   "postCreateCommand": "pip install --user -e .",
 
   // Use 'postStartCommand' to run commands after the container is started.
-  "postStartCommand": "jupyter lab ./examples/notebooks --no-browser --ip=127.0.0.1 --port=8890 &> /dev/null &",
+  "postStartCommand": "jupyter lab ./examples/notebooks --no-browser --port=8890",
 
   // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
   "remoteUser": "vscode",
