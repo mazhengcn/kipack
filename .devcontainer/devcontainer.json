@@ -10,6 +10,7 @@
   // Set *default* container specific settings.json values on container create.
   "settings": {
     "terminal.integrated.shell.linux": "/usr/bin/zsh",
+    "python.pythonPath": "/usr/local/bin/python",
     "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
     "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
     "python.sortImports.path": "/usr/local/py-utils/bin/isort"
