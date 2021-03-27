@@ -5,7 +5,7 @@
     "gamma": 0
   },
   "velocity_mesh": {
-    "nv": 30,
+    "nv": 32,
     "quad_rule": "uniform",
     "lower": 0.0,
     "upper": 6.283185307179586,

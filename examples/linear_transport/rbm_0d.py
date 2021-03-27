@@ -28,7 +28,7 @@ rkcoeff = {
 
 def run(kn=1.0, dt=0.01, nt=1000, coll="linear", scheme="Euler"):
     config = collision.utils.CollisionConfig.from_json(
-        "./configs/" + "linear" + ".json"
+        "./examples/linear_transport/configs/" + "linear" + ".json"
     )
 
     vmesh = collision.CartesianMesh(config)
@@ -52,7 +52,7 @@ def run(kn=1.0, dt=0.01, nt=1000, coll="linear", scheme="Euler"):
     solver.dt = dt
 
     domain = pykinetic.Domain([])
-    state = pykinetic.State(domain, vdof=vmesh.nvs)
+    state = pykinetic.State(domain, vmesh, 1)
 
     qinit(state, vmesh)
 
