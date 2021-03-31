@@ -38,7 +38,7 @@ def maxwellian_vec_init(vmesh, u, T, rho):
 
 def qinit(state, vmesh, init_func):
     x = state.grid.x.centers
-    rho = 1.0 + 0.5 * np.cos(4 * math.pi * x)
+    rho = 1.0 + 2.0 * np.cos(4 * math.pi * x)
     state.q[0, ...] = init_func(vmesh, 0.0, 1.0, rho)
 
 
@@ -120,7 +120,7 @@ def run(
     rp = pykinetic.riemann.advection_1D
     solver = DiffusiveRegimeSolver1D(
         rp,
-        coll_op,
+        [coll_op],
         kn=kn(x.centers),
         sigma_s=sigma_s(x.centers),
         sigma_a=sigma_a(x.centers),
