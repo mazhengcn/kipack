@@ -31,7 +31,7 @@ ENV PIPX_HOME=/usr/local/py-utils \
     PIPX_BIN_DIR=/usr/local/py-utils/bin
 ENV PATH=${PATH}:${PIPX_BIN_DIR}
 COPY .devcontainer/library-scripts/python-debian.sh /tmp/library-scripts/
-RUN bash /tmp/library-scripts/python-debian.sh "none" "/usr/local/" "${PIPX_HOME}" "${USERNAME}" \ 
+RUN bash /tmp/library-scripts/python-debian.sh "none" "/usr/local" "${PIPX_HOME}" "${USERNAME}" \ 
     && apt-get clean -y && rm -rf /tmp/library-scripts
 
 COPY .devcontainer/requirements.txt /tmp/pip-tmp/
