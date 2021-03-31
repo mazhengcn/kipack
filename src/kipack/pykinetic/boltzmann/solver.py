@@ -892,7 +892,6 @@ class BoltzmannSolver2D(BoltzmannSolver):
         self.tau = kwargs.get("heat_bath", None)
         self.device = kwargs.get("device", "gpu")
         self.kn = self._convert_params(kn)
-
         self.num_dim = 2
 
         super().__init__(riemann_solver, collision_operator)

@@ -11,29 +11,34 @@ def phi(eps):
     return np.minimum(1.0, 1.0 / eps)
 
 
-def maxwellian_vec_init(v, u, T, rho):
+def maxwellian_vec_init(vx, vy, ux, uy, T, rho):
     return (
-        rho[:, None]
-        / np.sqrt(2 * math.pi * T)
-        * np.exp(-((v - u) ** 2) / (2 * T))
+        rho[..., None, None]
+        / (2 * math.pi * T)
+        * np.exp(-((vx - ux) ** 2 - (vy - uy) ** 2) / (2 * T))
     )
 
 
 def qinit(state, vmesh, kn, init_func=None):
-    x = state.grid.x.centers
-    rho = 1.0 + 2.0 * np.cos(4 * math.pi * x)
-    v = vmesh.center
+    x, y = state.grid.x.centers, state.grid.y.centers
+    rho = 1.0 + 2.0 * np.exp((-x[..., None] ** 2 - y ** 2) / 0.25)
+    vx, vy = vmesh.centers
 
-    pos_v = init_func(v, 0.0, 1.0, rho)
-    # print(pos_v)
-    min_v = init_func(-v, 0.0, 1.0, rho)
-    state.q[0, :] = 0.5 * (pos_v + min_v)
-    state.q[1, :] = 0.5 / kn * (pos_v - min_v)
+    pvx_mvy = init_func(vx, -vy, 0.0, 0.0, 0.25, rho)
+    mvx_pvy = init_func(-vx, vy, 0.0, 0.0, 0.25, rho)
+    pvx_pvy = init_func(vx, vy, 0.0, 0.0, 0.25, rho)
+    mvx_mvy = init_func(-vx, -vy, 0.0, 0.0, 0.25, rho)
+
+    state.q[0, :] = 0.5 * (pvx_mvy + mvx_pvy)
+    state.q[1, :] = 0.5 / kn * (pvx_mvy - mvx_pvy)
+    state.q[2, :] = 0.5 * (pvx_pvy + mvx_mvy)
+    state.q[3, :] = 0.5 / kn * (pvx_pvy - mvx_mvy)
 
 
 def compute_rho(state, vmesh):
     vaxis = tuple(-(i + 1) for i in range(vmesh.num_dim))
-    return np.sum(state.q[0, ...] * vmesh.weights, axis=vaxis)
+    rho = np.sum(state.q[::2] * vmesh.weights, axis=vaxis)
+    return 0.5 * (rho[0] + rho[1])
 
 
 class APNeutronTransportSolver2D(BoltzmannSolver2D):
@@ -66,7 +71,7 @@ class APNeutronTransportSolver2D(BoltzmannSolver2D):
             self.coll[0](state.q[::2], heat_bath=self.tau, device=self.device)
             + state.q[::2]
         )
-        rho = 0.5 * (rho[0] + rho[2])
+        rho = 0.5 * (rho[0] + rho[1])
         state.q[::2] = (dt_kn2 * self.sigma_s * rho + state.q[::2]) / (
             1.0 + dt_kn2 * self.sigma_s
         )
@@ -77,14 +82,14 @@ class APNeutronTransportSolver2D(BoltzmannSolver2D):
         self._apply_bcs(state)
         rbc = self.qbc[::2]
         vxdr_dx = vx * (
-            rbc[:, num_ghost + 1 : -num_ghost + 1]
-            - rbc[:, num_ghost - 1 : -num_ghost - 1]
+            rbc[:, num_ghost + 1 : -num_ghost + 1, num_ghost:-num_ghost]
+            - rbc[:, num_ghost - 1 : -num_ghost - 1, num_ghost:-num_ghost]
         )
         vxdr_dx /= 2 * state.grid.delta[0]
         # Compute vy * dr / dy
         vydr_dy = vy * (
-            rbc[:, :, num_ghost + 1 : -num_ghost + 1]
-            - rbc[:, :, num_ghost - 1 : -num_ghost - 1]
+            rbc[:, num_ghost:-num_ghost, num_ghost + 1 : -num_ghost + 1]
+            - rbc[:, num_ghost:-num_ghost, num_ghost - 1 : -num_ghost - 1]
         )
         vydr_dy /= 2 * state.grid.delta[1]
         vydr_dy[0] = -vydr_dy[0]
@@ -125,11 +130,11 @@ def run(
 ):
     # Load config
     config = collision.utils.CollisionConfig.from_json(
-        "./examples/linear_transport/configs/" + "parity" + ".json"
+        "./examples/linear_transport/configs/" + "parity_2d" + ".json"
     )
 
     # Collision
-    vmesh = collision.CartesianMesh(config)
+    vmesh = collision.PolarMesh(config)
     # print(vmesh.centers[0], vmesh.weights)
     if coll == "linear":
         coll_op = collision.LinearCollision(config, vmesh)
@@ -149,14 +154,14 @@ def run(
     domain = pykinetic.Domain([x, y])
 
     # Riemann solver
-    rp = pykinetic.riemann.parity_1D
+    rp = pykinetic.riemann.parity_2D
     solver = APNeutronTransportSolver2D(
         rp,
         [coll_op],
-        kn=kn(x.centers),
-        sigma_s=sigma_s(x.centers),
-        sigma_a=sigma_a(x.centers),
-        Q=Q(x.centers),
+        kn=kn(x.centers, y.centers),
+        sigma_s=sigma_s(x.centers, y.centers),
+        sigma_a=sigma_a(x.centers, y.centers),
+        Q=Q(x.centers, y.centers),
     )
     # print(solver.kn)
     solver.order = 1
@@ -165,50 +170,45 @@ def run(
     solver.dt = dt
     print("dt is {}".format(solver.dt))
 
-    sigma = sigma_s(x.centers) + kn(x.centers) ** 2 * sigma_a(x.centers)
-    sigma_l, sigma_r = None, None
-    if isinstance(sigma, np.ndarray):
-        sigma_l, sigma_r = sigma[0], sigma[-1]
-    else:
-        sigma_l = sigma_r = sigma
-    kn_l, kn_r = None, None
-    if isinstance(solver.kn, np.ndarray):
-        kn_l, kn_r = solver.kn[0], solver.kn[-1]
-    else:
-        kn_l = kn_r = solver.kn
+    # sigma = sigma_s(x.centers, y.centers) + kn(
+    #     x.centers, y.centers
+    # ) ** 2 * sigma_a(x.centers, y.centers)
+    # sigma_l, sigma_r = None, None
+    # if isinstance(sigma, np.ndarray):
+    #     sigma_l, sigma_r = sigma[0], sigma[-1]
+    # else:
+    #     sigma_l = sigma_r = sigma
+    # kn_l, kn_r = None, None
+    # if isinstance(solver.kn, np.ndarray):
+    #     kn_l, kn_r = solver.kn[0], solver.kn[-1]
+    # else:
+    #     kn_l = kn_r = solver.kn
 
     # Boundary conditions
     def dirichlet_lower_BC(state, dim, t, qbc, auxbc, num_ghost):
-        v = state.problem_data["v"][0] / sigma_l
-        kn_dx = kn_l / state.grid.delta[0]
-        for i in range(num_ghost):
-            qbc[0, i, :] = (
-                f_l(v) - (0.5 - kn_dx * v) * qbc[0, num_ghost, :]
-            ) / (0.5 + kn_dx * v)
-        for i in range(num_ghost):
-            qbc[1, i, :] = (
-                2 * f_l(v) - (qbc[0, num_ghost - 1, :] + qbc[0, num_ghost, :])
-            ) / kn_l - qbc[1, num_ghost, :]
+        if dim.name == "x":
+            for i in range(num_ghost):
+                qbc[:, i] = -qbc[:, num_ghost]
+        elif dim.name == "y":
+            for i in range(num_ghost):
+                qbc[:, :, i] = -qbc[:, :, num_ghost]
+        else:
+            raise ValueError("Dim could be only x or y.")
 
     def dirichlet_upper_BC(state, dim, t, qbc, auxbc, num_ghost):
-        v = state.problem_data["v"][0] / sigma_r
-        kn_dx = kn_r / state.grid.delta[0]
-        for i in range(num_ghost):
-            qbc[0, -i - 1, :] = (
-                f_r(v) - (0.5 - kn_dx * v) * qbc[0, -num_ghost - 1, :]
-            ) / (0.5 + kn_dx * v)
-        for i in range(num_ghost):
-            qbc[1, -i - 1, :] = (
-                (qbc[0, -num_ghost, :] + qbc[0, -num_ghost - 1, :])
-                - 2 * f_r(v)
-            ) / kn_r - qbc[1, -num_ghost - 1, :]
+        if dim.name == "x":
+            for i in range(num_ghost):
+                qbc[:, -i - 1] = -qbc[:, -num_ghost - 1]
+        elif dim.name == "y":
+            for i in range(num_ghost):
+                qbc[:, :, -i - 1] = -qbc[:, :, -num_ghost - 1]
+        else:
+            raise ValueError("Dim could be only x or y.")
 
     if BC == "periodic":
-        solver.bc_lower[0] = pykinetic.BC.periodic
-        solver.bc_upper[0] = pykinetic.BC.periodic
+        solver.all_bcs = pykinetic.BC.periodic
     elif BC == "dirichlet":
-        solver.bc_lower[0] = pykinetic.BC.custom
-        solver.bc_upper[0] = pykinetic.BC.custom
+        solver.all_bcs = pykinetic.BC.custom
         solver.user_bc_lower = dirichlet_lower_BC
         solver.user_bc_upper = dirichlet_upper_BC
     else:

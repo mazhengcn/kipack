@@ -1,6 +1,6 @@
 import numpy as np
 
-num_eqn = 2
+num_eqn = 4
 num_waves = 2
 
 

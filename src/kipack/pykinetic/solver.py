@@ -237,7 +237,6 @@ class Solver(object):
         for (idim, dim) in enumerate(grid.dimensions):
             # Check if we are on a true boundary
             if state.grid.on_lower_boundary[idim]:
-
                 bcs = []
                 if state.num_aux > 0:
                     bcs.append(
