@@ -22,7 +22,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 
 # [Optional] Uncomment this section to install additional OS packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends python3-venv
+    && apt-get -y install --no-install-recommends screen python3-venv
 
 # Add link for cupy docker python.
 RUN ln -s /usr/bin/python3 /usr/local/bin/python
