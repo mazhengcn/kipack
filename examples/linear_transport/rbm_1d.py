@@ -2,9 +2,9 @@ import copy
 import math
 
 import numpy as np
-from examples.utils import Progbar
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
+from utils import Progbar
 
 rkcoeff = {
     "RK3": {
@@ -96,7 +96,7 @@ def run(
 ):
     # Load config
     config = collision.utils.CollisionConfig.from_json(
-        "./examples/linear_transport/configs/" + "linear" + ".json"
+        "./linear_transport/configs/" + "linear" + ".json"
     )
 
     # Collision
@@ -175,14 +175,15 @@ def run(
     pbar = Progbar(nt)
     for t in range(nt):
         solver.evolve_to_time(sol)
-        sol_frames.append(copy.deepcopy(sol))
-        macro_frames.append(compute_rho(sol.state, vmesh))
-        ts.append(0.0 + (t + 1) * dt)
+        if (t + 1) % 2500 == 0:
+            sol_frames.append(copy.deepcopy(sol))
+            macro_frames.append(compute_rho(sol.state, vmesh))
+            ts.append(sol.t)
         pbar.update(t + 1, finalize=False)
     pbar.update(nt, finalize=True)
 
-    output_dict["macro_frames"] = macro_frames
-    output_dict["x"] = x.centers
-    output_dict["t"] = ts
+    output_dict["macro_frames"] = np.asarray(macro_frames)
+    output_dict["x"] = np.asarray(x.centers)
+    output_dict["t"] = np.asarray(ts)
 
     return output_dict
