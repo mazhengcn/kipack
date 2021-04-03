@@ -907,8 +907,8 @@ class BoltzmannSolver2D(BoltzmannSolver):
 
     def dq_hyperbolic_1d(self, state, idim):
         self._apply_bcs(state)
-        q = np.moveaxis(self.qbc, idim, 1)
-        aux = np.moveaxis(self.auxbc, idim, 1)
+        q = np.swapaxes(self.qbc, idim, 1)
+        aux = np.swapaxes(self.auxbc, idim, 1)
 
         grid = state.grid
         mx = grid.num_cells[0]
@@ -1016,7 +1016,7 @@ class BoltzmannSolver2D(BoltzmannSolver):
             dq[m, LL:UL] -= dtdx[LL:UL] * (apdq2[m, LL:UL] + amdq2[m, LL:UL])
 
         self.cfl.update_global_max(cfl)
-        return np.moveaxis(
+        return np.swapaxes(
             dq[
                 :,
                 self.num_ghost : -self.num_ghost,

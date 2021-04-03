@@ -69,4 +69,3 @@ class SymmetricRBMLinearCollision(RandomBatchLinearCollision):
             raise ValueError("Only dimension 1 and 2 are implemented.")
 
         return f_batch * weights_batch - f
-        # return self.nv ** (self.num_dim) * f[..., idx] * self.weights[idx] - f

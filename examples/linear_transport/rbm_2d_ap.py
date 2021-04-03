@@ -92,7 +92,7 @@ class APNeutronTransportSolver2D(BoltzmannSolver2D):
             - rbc[:, num_ghost:-num_ghost, num_ghost - 1 : -num_ghost - 1]
         )
         vydr_dy /= 2 * state.grid.delta[1]
-        vydr_dy[0] = -vydr_dy[0]
+        vydr_dy[0, :] = -vydr_dy[0, :]
 
         # Update j
         phi = state.problem_data["phi"]
@@ -186,22 +186,50 @@ def run(
 
     # Boundary conditions
     def dirichlet_lower_BC(state, dim, t, qbc, auxbc, num_ghost):
+        vx, vy = state.problem_data["v"]
         if dim.name == "x":
             for i in range(num_ghost):
-                qbc[:, i] = -qbc[:, num_ghost]
+                qbc[::2, i] = -qbc[::2, num_ghost + i]
+                qbc[1::2, i] = (
+                    2 * (-vx * 2 * qbc[::2, num_ghost] / state.grid.delta[0])
+                    - qbc[1::2, num_ghost + i]
+                )
         elif dim.name == "y":
             for i in range(num_ghost):
-                qbc[:, :, i] = -qbc[:, :, num_ghost]
+                qbc[::2, :, i] = -qbc[::2, :, num_ghost + i]
+                qbc[1::2, :, i] = (
+                    2
+                    * (-vy * 2 * qbc[::2, :, num_ghost] / state.grid.delta[1])
+                    - qbc[1::2, :, num_ghost + i]
+                )
+                qbc[1, :, i] = -qbc[1, :, i]
         else:
             raise ValueError("Dim could be only x or y.")
 
     def dirichlet_upper_BC(state, dim, t, qbc, auxbc, num_ghost):
+        vx, vy = state.problem_data["v"]
         if dim.name == "x":
             for i in range(num_ghost):
-                qbc[:, -i - 1] = -qbc[:, -num_ghost - 1]
+                qbc[::2, -i - 1] = -qbc[::2, -2 * num_ghost + i]
+                qbc[1::2, -i - 1] = (
+                    2
+                    * (vx * 2 * qbc[::2, -num_ghost - 1] / state.grid.delta[0])
+                    - qbc[1::2, -2 * num_ghost + i]
+                )
         elif dim.name == "y":
             for i in range(num_ghost):
-                qbc[:, :, -i - 1] = -qbc[:, :, -num_ghost - 1]
+                qbc[::2, :, -i - 1] = -qbc[::2, :, -2 * num_ghost + i]
+                qbc[1::2, :, -i - 1] = (
+                    2
+                    * (
+                        vy
+                        * 2
+                        * qbc[::2, :, -num_ghost - 1]
+                        / state.grid.delta[1]
+                    )
+                    - qbc[1::2, :, -2 * num_ghost + i]
+                )
+                qbc[1, :, -i - 1] = -qbc[1, :, -i - 1]
         else:
             raise ValueError("Dim could be only x or y.")
 
@@ -238,7 +266,7 @@ def run(
     pbar.update(nt, finalize=True)
 
     output_dict["macro_frames"] = macro_frames
-    output_dict["x"] = x.centers
+    output_dict["mesh"] = state.c_centers
     output_dict["t"] = ts
 
     return output_dict

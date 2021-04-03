@@ -175,7 +175,7 @@ def run(
     pbar = Progbar(nt)
     for t in range(nt):
         solver.evolve_to_time(sol)
-        if (t + 1) % 2500 == 0:
+        if (t + 1) % 1 == 0:
             sol_frames.append(copy.deepcopy(sol))
             macro_frames.append(compute_rho(sol.state, vmesh))
             ts.append(sol.t)

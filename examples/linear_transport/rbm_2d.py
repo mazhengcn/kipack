@@ -19,7 +19,8 @@ def maxwellian_vec_init(vmesh, u, T, rho):
 def qinit(state, vmesh, init_func):
     x = state.grid.x.centers
     rho = 1.0 + 0.5 * np.cos(4 * math.pi * x)
-    state.q[0, ...] = init_func(vmesh, 0.0, 1.0, rho)
+    vx, vy = vmesh.centers
+    state.q[0, ...] = init_func(vx, vy, 0.0, 0.0, 1.0, rho)
 
 
 def compute_rho(state, vmesh):
@@ -171,7 +172,7 @@ def run(
     pbar.update(nt, finalize=True)
 
     output_dict["macro_frames"] = macro_frames
-    output_dict["x"] = x.centers
+    output_dict["mesh"] = state.c_centers
     output_dict["t"] = ts
 
     return output_dict
