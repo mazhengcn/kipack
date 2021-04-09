@@ -4,7 +4,7 @@ FROM cupy/cupy:latest
 RUN rm -rf /etc/apt/sources.list.d/cuda.list /etc/apt/sources.list.d/nvidia-ml.list
 
 # [Option] Install zsh
-ARG INSTALL_ZSH="true"
+ARG INSTALL_ZSH="false"
 # [Option] Upgrade OS packages to their latest versions
 ARG UPGRADE_PACKAGES="true"
 
