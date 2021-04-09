@@ -23,22 +23,22 @@
   // "forwardPorts": [8890],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "pip install --user -e .",
+  "postCreateCommand": "pip install -e .",
 
   // Use 'postStartCommand' to run commands after the container is started.
   // "postStartCommand": "jupyter lab ./examples/notebooks --no-browser --port=8890",
 
   // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-  "remoteUser": "vscode",
+  // "remoteUser": "vscode",
 
   // Runtime args.
   "runArgs": ["--name", "kipack", "--gpus", "all"],
 
   // Bind working directory.
-  "workspaceMount": "source=/home/zheng/repositories/kipack,target=/home/vscode/kipack,type=bind,consistency=cached",
+  "workspaceMount": "source=/home/zheng/repos/kipack,target=/workspace/kipack,type=bind,consistency=cached",
 
   // Default working directory
-  "workspaceFolder": "/home/vscode/kipack",
+  "workspaceFolder": "/workspace/kipack",
 
   // Keep container running after disconnect.
   "shutdownAction": "none"
