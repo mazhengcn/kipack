@@ -4,7 +4,7 @@ from io import open
 
 from setuptools import find_packages, setup
 
-version = "0.0.3dev"
+version = "0.9.0"
 
 project_name = "kipack"
 
