@@ -1,9 +1,9 @@
 # Project related
 .vscode/
-configs/
+# configs/
 data/
 figs/
-notebooks/
+# notebooks/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

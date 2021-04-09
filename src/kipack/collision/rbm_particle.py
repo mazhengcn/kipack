@@ -1,20 +1,19 @@
 import math
 
-import numpy as np
 import cupy as cp
+import numpy as np
+from kipack.collision.base import BaseCollision
 
-from .base import BaseCollision
 
-
-class RandomBatchCollision(BaseCollision):
+class RandomBatchCollisionParticle(BaseCollision):
     def load_parameters(self):
         self.eps = None
         # Load collision model (e and gamma)
         self.nv = self.vm.nv
-        self.vmin = self.vm.v_center[0]
+        self.vmin = self.vm.center[0]
         self.dv = self.vm.delta
         # vgrid shape: (2, nv, nv)
-        self._cpu_v = np.asarray(self.vm.v_centers)
+        self._cpu_v = np.asarray(self.vm.centers)
         # Get sigma
         self.ncirc = self.vm.ncirc_or_nsphr
         # sigma shape (ncir, 2)
@@ -65,7 +64,7 @@ class RandomBatchCollision(BaseCollision):
             2 * math.pi * eps
         )
 
-        return xp.sum(f * kernel, axis=(-1, -2))
+        return xp.sum(f[..., None, None, :, :] * kernel, axis=(-1, -2))
 
     def collide(self, input_f):
         xp = cp.get_array_module(input_f)

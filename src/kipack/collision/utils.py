@@ -15,6 +15,9 @@ class VMeshConfig(base_config.Config):
     dev: float = 7.0
     cmax: float = 0.0
     Tmax: float = 223.0
+    lower: float = -1.0
+    upper: float = 1.0
+    radius: float = 1.0
 
 
 @dataclasses.dataclass

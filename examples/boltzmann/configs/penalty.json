@@ -1,0 +1,12 @@
+{
+  "collision_model": {
+    "dim": 2,
+    "e": 0.9999,
+    "gamma": 0
+  },
+  "velocity_mesh": {
+    "nv": 64,
+    "s": 3.5,
+    "nphi": 16
+  }
+}

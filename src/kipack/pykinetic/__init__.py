@@ -6,13 +6,9 @@ import os  # noqa
 # Sub-packages
 from kipack.pykinetic import limiters  # noqa
 from kipack.pykinetic import riemann  # noqa
-from kipack.pykinetic.boltzmann.solver import (  # noqa
-    BoltzmannSolver0D,  # noqa
-    BoltzmannSolver1D,  # noqa
-)
+from kipack.pykinetic.boltzmann.solver import BoltzmannSolver0D  # noqa
+from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D  # noqa
 from kipack.pykinetic.cfl import CFL  # noqa
-
-
 from kipack.pykinetic.geometry import Dimension, Domain, Patch  # noqa
 from kipack.pykinetic.solution import Solution  # noqa
 from kipack.pykinetic.solver import BC  # noqa

@@ -2,10 +2,9 @@ import copy
 import math
 
 import numpy as np
-from tqdm.notebook import tnrange
+from kipack import collision, pykinetic
 
-from kipack import collision
-from kipack import pykinetic
+from ..utils import Progbar
 
 
 class PenalizationSolver0D(pykinetic.BoltzmannSolver0D):
@@ -50,7 +49,7 @@ def run(kn=1.0, tau=0.1, p=1.0, dt=0.01, nt=1000, scheme="Euler"):
     config = collision.utils.CollisionConfig.from_json(
         "./configs/penalty.json"
     )
-    vmesh = collision.VMesh(config)
+    vmesh = collision.SpectralMesh(config)
     coll_op = collision.FSInelasticVHSCollision(config, vmesh)
 
     tau = tau * kn
@@ -77,17 +76,20 @@ def run(kn=1.0, tau=0.1, p=1.0, dt=0.01, nt=1000, scheme="Euler"):
     solver.dt = dt
 
     domain = pykinetic.Domain([])
-    state = pykinetic.State(domain, vdof=vmesh.nv_s)
+    state = pykinetic.State(domain, vdof=vmesh.nvs)
 
     qinit(state, vmesh)
 
     sol = pykinetic.Solution(state, domain)
     sol_frames = []
     T_frames = []
-    for _ in tnrange(nt):
+    pbar = Progbar(nt)
+    for t in range(nt):
         solver.evolve_to_time(sol)
         T_frames.append(vmesh.get_p(sol.q)[-1])
         sol_frames.append(copy.deepcopy(sol))
+        pbar.update(t + 1, finalize=False)
+    pbar.update(nt, finalize=True)
 
     return T_frames, sol_frames, vmesh, coll_op, solver
 
@@ -131,7 +133,7 @@ def ext_T(t, e, kn, tau, rho0, T0):
 
 
 def flat(vmesh, T0):
-    vx, vy = vmesh.v_centers
+    vx, vy = vmesh.centers
     w = np.sqrt(3 * T0)
     return 1 / 4 / w ** 2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
 

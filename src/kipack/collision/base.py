@@ -10,9 +10,9 @@ class BaseCollision(object, metaclass=ABCMeta):
         self.config = config
         self.vm = velocity_mesh
         # Load dimension
-        self.ndim = self.config.collision_model.dim
+        self.num_dim = self.config.collision_model.dim
         assert (
-            self.ndim == self.vm.ndim
+            self.num_dim == self.vm.num_dim
         ), "'spectral_mesh' has different \
             velocity dimensions from collision model! This may be caused by \
             using different config files. Please check the consistency."
@@ -28,7 +28,7 @@ class BaseCollision(object, metaclass=ABCMeta):
         self._input_shape = None
 
     def __call__(self, input_f, heat_bath=None, device="cpu"):
-
+        output = None
         if device == "cpu":
             if not self._built_cpu or input_f.shape != self._input_shape:
                 # Broadcast kernels and build

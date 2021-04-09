@@ -1,0 +1,45 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.158.0/containers/python-3
+{
+  "name": "kipack",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  // Set *default* container specific settings.json values on container create.
+  "settings": {
+    "terminal.integrated.shell.linux": "/usr/bin/zsh",
+    "python.pythonPath": "/usr/local/bin/python",
+    "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
+    "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
+    "python.sortImports.path": "/usr/local/py-utils/bin/isort"
+  },
+
+  // Add the IDs of extensions you want installed when the container is created.
+  "extensions": ["ms-python.python", "ms-python.vscode-pylance"],
+
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  // "forwardPorts": [8890],
+
+  // Use 'postCreateCommand' to run commands after the container is created.
+  "postCreateCommand": "pip install -e .",
+
+  // Use 'postStartCommand' to run commands after the container is started.
+  // "postStartCommand": "jupyter lab ./examples/notebooks --no-browser --port=8890",
+
+  // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+  // "remoteUser": "vscode",
+
+  // Runtime args.
+  "runArgs": ["--name", "kipack", "--gpus", "all"],
+
+  // Bind working directory.
+  "workspaceMount": "source=/home/zheng/repos/kipack,target=/workspace/kipack,type=bind,consistency=cached",
+
+  // Default working directory
+  "workspaceFolder": "/workspace/kipack",
+
+  // Keep container running after disconnect.
+  "shutdownAction": "none"
+}
