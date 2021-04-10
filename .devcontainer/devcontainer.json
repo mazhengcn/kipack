@@ -35,10 +35,10 @@
   "runArgs": ["--name", "kipack", "--gpus", "all"],
 
   // Bind working directory.
-  "workspaceMount": "source=/home/zheng/repos/kipack,target=/workspace/kipack,type=bind,consistency=cached",
+  "workspaceMount": "source=/home/zheng/repos/kipack,target=/workspace,type=bind,consistency=cached",
 
   // Default working directory
-  "workspaceFolder": "/workspace/kipack",
+  "workspaceFolder": "/workspace",
 
   // Keep container running after disconnect.
   "shutdownAction": "none"
