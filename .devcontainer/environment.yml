@@ -1,0 +1,14 @@
+name: kipack
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - numpy
+  - scipy
+  - pyfftw
+  - cupy
+  - matplotlib
+  - jupyterlab
+  - pip
+  - pip:
+      - params-mz @ git+https://github.com/Mayuyu/params.git

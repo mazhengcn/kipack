@@ -1,7 +1,4 @@
-FROM cupy/cupy:latest
-
-# Workaround for nvidia repos.
-RUN rm -rf /etc/apt/sources.list.d/cuda.list /etc/apt/sources.list.d/nvidia-ml.list
+FROM continuumio/miniconda3
 
 # [Option] Install zsh
 ARG INSTALL_ZSH="false"
@@ -19,12 +16,6 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive  \
     && bash -c "$(curl -fsSL "https://raw.githubusercontent.com/microsoft/vscode-dev-containers/master/script-library/common-debian.sh")" -- "${INSTALL_ZSH}" "${USERNAME}" "${USER_UID}" "${USER_GID}" "${UPGRADE_PACKAGES}" "true" "true" \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-# [Optional] Uncomment this section to install additional OS packages.
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends screen python3-venv
-
-# Add link for cupy docker python.
-RUN ln -s /usr/bin/python3 /usr/local/bin/python
 # Setup default python tools in a venv via pipx to avoid conflicts
 ENV PIPX_HOME=/usr/local/py-utils \
     PIPX_BIN_DIR=/usr/local/py-utils/bin
@@ -32,9 +23,9 @@ ENV PATH=${PATH}:${PIPX_BIN_DIR}
 # Download script and run it with the option above
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive  \
     && apt-get -y install --no-install-recommends curl ca-certificates \
-    && bash -c "$(curl -fsSL "https://raw.githubusercontent.com/microsoft/vscode-dev-containers/master/script-library/python-debian.sh")" -- "none" "/usr/local" "${PIPX_HOME}" "${USERNAME}" \
+    && bash -c "$(curl -fsSL "https://raw.githubusercontent.com/microsoft/vscode-dev-containers/master/script-library/python-debian.sh")" -- "none" "/opt/conda" "${PIPX_HOME}" "${USERNAME}" "false" \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
-COPY .devcontainer/requirements.txt /tmp/pip-tmp/
-RUN pip --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt \
-    && rm -rf /tmp/pip-tmp
+COPY environment.yml* .devcontainer/noop.txt /tmp/conda-tmp/
+RUN if [ -f "/tmp/conda-tmp/environment.yml" ]; then /opt/conda/bin/conda env update -n base -f /tmp/conda-tmp/environment.yml; fi \
+    && rm -rf /tmp/conda-tmp
