@@ -112,6 +112,7 @@ DEFAULT_UTILS="\
     pycodestyle \
     bandit \
     pipenv \
+    isort \
     virtualenv"
 
 
