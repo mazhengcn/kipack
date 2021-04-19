@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.158.0/containers/python-3
 {
-  "name": "kipack",
+  "name": "Kipack dev container",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
@@ -32,13 +32,13 @@
   // "remoteUser": "vscode",
 
   // Runtime args.
-  "runArgs": ["--name", "kipack", "--gpus", "all"],
+  "runArgs": ["--name=kipack", "--gpus=all"],
 
   // Bind working directory.
-  "workspaceMount": "source=/home/zheng/repos/kipack,target=/workspace,type=bind,consistency=cached",
+  "workspaceMount": "source=/home/zheng/repos/kipack,target=/workspaces/kipack,type=bind,consistency=cached",
 
   // Default working directory
-  "workspaceFolder": "/workspace",
+  "workspaceFolder": "/workspaces/kipack",
 
   // Keep container running after disconnect.
   "shutdownAction": "none"
