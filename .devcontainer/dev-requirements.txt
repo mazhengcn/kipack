@@ -8,4 +8,4 @@ matplotlib
 jupyterlab
 pyfftw
 params-mz @ git+https://github.com/Mayuyu/params.git
-[--install-option="--no-deps"] [--install-option="--editable"] .
+[-e] .
