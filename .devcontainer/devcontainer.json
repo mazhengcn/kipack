@@ -2,28 +2,24 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.158.0/containers/python-3
 {
   "name": "Kipack dev container",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
+  "image": "zhengma/cupy",
 
   // Set *default* container specific settings.json values on container create.
   "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash",
-    "python.pythonPath": "/opt/conda/bin/python",
+    "terminal.integrated.shell.linux": "/usr/bin/zsh",
+    "python.pythonPath": "/usr/local/bin/python",
     "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-    "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-    "python.sortImports.path": "/usr/local/py-utils/bin/isort"
+    "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8"
   },
 
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": ["ms-python.python", "ms-python.vscode-pylance"],
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [8890],
+  "forwardPorts": [8889],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "pip install -e .",
+  "postCreateCommand": "pip3 install --no-cache-dir -r .devcontainer/dev-requirements.txt",
 
   // Use 'postStartCommand' to run commands after the container is started.
   // "postStartCommand": "jupyter lab ./examples/notebooks --no-browser --port=8890",

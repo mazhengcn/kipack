@@ -4,7 +4,6 @@ typing
 pyyaml
 numpy
 scipy
-matplotlib
 cupy
 pyfftw
 params-mz @ git+https://github.com/Mayuyu/params.git

@@ -1,0 +1,11 @@
+six
+dataclasses
+typing
+pyyaml
+numpy
+scipy
+matplotlib
+jupyterlab
+pyfftw
+params-mz @ git+https://github.com/Mayuyu/params.git
+[-e] . --install-option="--no-deps"
