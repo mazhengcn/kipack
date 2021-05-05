@@ -3,9 +3,8 @@ import math
 import cupy as cp
 import numpy as np
 import pyfftw
-from scipy import special
-
 from kipack.collision.base import BaseCollision
+from scipy import special
 
 
 class FSInelasticVHSCollision(BaseCollision):
@@ -36,9 +35,7 @@ class FSInelasticVHSCollision(BaseCollision):
             raise ValueError("Dimension must be 2 or 3.")
 
         # Sphere area constant
-        self._sphr_fac = (
-            2 * math.pi ** (0.5 * self.ndim) / math.gamma(0.5 * self.ndim)
-        )
+        self._sphr_fac = 2 * math.pi ** (0.5 * self.ndim) / math.gamma(0.5 * self.ndim)
 
     def _pre_fac(self, r):
         return self._sphr_fac * r ** (self._gamma + self.ndim - 1)
@@ -118,7 +115,7 @@ class FSInelasticVHSCollision(BaseCollision):
             "lapl": lapl_gpu,
         }
 
-        print("Finished collision model precomputation.")
+        print("Collision model precomputation finished!")
 
     def _build_cpu(self, input_shape):
         # Pyfftw routines
@@ -136,9 +133,7 @@ class FSInelasticVHSCollision(BaseCollision):
         fftw1 = pyfftw.builders.fftn(arr1, axes=axis)
         ifftw1 = pyfftw.builders.ifftn(arr1, axes=axis)
         # fft2
-        arr2 = pyfftw.empty_aligned(
-            (self.vm.nr, self.vm.ncirc_or_nsphr) + input_shape
-        )
+        arr2 = pyfftw.empty_aligned((self.vm.nr, self.vm.ncirc_or_nsphr) + input_shape)
         fftw2 = pyfftw.builders.fftn(arr2, axes=axis)
         ifftw2 = pyfftw.builders.ifftn(arr2, axes=axis)
         # ffts dict (cpu)
@@ -195,9 +190,7 @@ class FSInelasticVHSCollision(BaseCollision):
         # fft of input
         f_hat = self.ffts[0](input_f)
         # Gain
-        gain_hat = self.ffts[2](
-            self.iffts[2](self.kernels["exp"] * f_hat) * input_f
-        )
+        gain_hat = self.ffts[2](self.iffts[2](self.kernels["exp"] * f_hat) * input_f)
         # Multiplied by the gain kernel
         gain_hat *= self.kernels["gain"]
         gain_hat = gain_hat.sum(axis=(0, 1))
@@ -216,9 +209,7 @@ class FSInelasticVHSCollision(BaseCollision):
 def _broadcast_kernels(kernels, dim, num_extr_dim):
     # Expand gain kernels
     expand_loss_slice = (slice(None),) + (None,) * num_extr_dim
-    kernels["loss"] = kernels["loss"].squeeze()[
-        expand_loss_slice + (None,) * dim
-    ]
+    kernels["loss"] = kernels["loss"].squeeze()[expand_loss_slice + (None,) * dim]
     kernels["sp"] = kernels["sp"].squeeze()[expand_loss_slice]
     # Expand loss kernels
     expand_gain_slice = (slice(None),) + expand_loss_slice

@@ -22,9 +22,7 @@ class BaseVMesh(object, metaclass=ABCMeta):
     def centers(self):
         if self._centers is None:
             index = np.indices(self.num_nodes)
-            self._centers = [
-                self.center[index[i, ...]] for i in range(self.num_dim)
-            ]
+            self._centers = [self.center[index[i, ...]] for i in range(self.num_dim)]
         return self._centers
 
     @property
@@ -108,9 +106,7 @@ class SpectralMesh(BaseVMesh):
     def _build_spherical_mesh(self):
         self._ssrule = self.config.ssrule
         self._nsphr = self.config.nsphr
-        srule = get_sphrquadrule(
-            "symmetric", rule=self._ssrule, npts=self._nsphr
-        )
+        srule = get_sphrquadrule("symmetric", rule=self._ssrule, npts=self._nsphr)
         self._spts = srule.pts
         self._wspts = 4 * math.pi / self._nsphr
 
@@ -171,10 +167,17 @@ class SpectralMesh(BaseVMesh):
 class CartesianMesh(BaseVMesh):
     def _load_quadrature(self):
         quad_rule = self.config.quad_rule
-        v_quads = {"legendre": np.polynomial.legendre.leggauss}
+        v_quads = {
+            "legendre": np.polynomial.legendre.leggauss,
+            "hermite": np.polynomial.hermite.hermgauss,
+        }
         v, wv = v_quads[quad_rule](self._nv)
-        self._center = self.L * v + 0.5 * (self.lower + self.upper)
-        self._weights = self.L * wv
+        if quad_rule in ["legendre"]:
+            self._center = self.L * v + 0.5 * (self.lower + self.upper)
+            self._weights = self.L * wv
+        else:
+            self._center = v
+            self._weights = wv
 
     def _build_velocity_mesh(self):
         # Define the velocity mesh for 2D and 3D
@@ -205,9 +208,7 @@ class CartesianMesh(BaseVMesh):
                 weights = weights * self._weights / (2 * self.L)
             return weights
         else:
-            return (self.delta / (2 * self.L)) ** self.num_dim * np.ones(
-                self.num_nodes
-            )
+            return (self.delta / (2 * self.L)) ** self.num_dim * np.ones(self.num_nodes)
 
     @property
     def lower(self):
@@ -245,9 +246,7 @@ class PolarMesh(BaseVMesh):
             print("Velocity domain: disk with raidus {}.".format(self._radius))
             self._build_polar_mesh()
         else:
-            raise ValueError(
-                "Only polar coordinate systme is implemented currently."
-            )
+            raise ValueError("Only polar coordinate systme is implemented currently.")
 
     def _build_polar_mesh(self):
         self._wphi = (self._upper - self._lower) / self._nv

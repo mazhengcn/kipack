@@ -54,18 +54,3 @@ class SymmetricRBMLinearCollision(RandomBatchLinearCollision):
         idx[nvrange[: self.nv // 2]] = nvrange[self.nv // 2 :]
         idx[nvrange[self.nv // 2 :]] = nvrange[: self.nv // 2]
         return idx
-
-    def collide(self, input_f):
-        xp = cp.get_array_module(input_f)
-        f = input_f
-        idx = self._random_batch(xp)
-        if self.num_dim == 1:
-            f_batch = f[..., idx]
-            weights_batch = self.nv * self.weights[idx]
-        elif self.num_dim == 2:
-            f_batch = f[..., idx, idx]
-            weights_batch = self.nv * self.weights[idx, idx]
-        else:
-            raise ValueError("Only dimension 1 and 2 are implemented.")
-
-        return f_batch * weights_batch - f

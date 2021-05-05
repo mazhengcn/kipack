@@ -17,6 +17,9 @@ class BaseCollision(object, metaclass=ABCMeta):
             velocity dimensions from collision model! This may be caused by \
             using different config files. Please check the consistency."
 
+        if "sigma" in kwargs.keys():
+            self.sigma = kwargs["sigma"]
+
         # Read model parameters
         self.load_parameters()
 

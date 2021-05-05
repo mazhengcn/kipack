@@ -68,9 +68,7 @@ def run(
     scheme="Euler",
     euler_solver=False,
 ):
-    config = collision.utils.CollisionConfig.from_json(
-        "./configs/" + coll + ".json"
-    )
+    config = collision.utils.CollisionConfig.from_json("./configs/" + coll + ".json")
 
     vmesh = collision.SpectralMesh(config)
     if coll == "fsm":
@@ -200,11 +198,7 @@ def anisotropic_f(v):
         * (
             np.exp(
                 -(16 ** (1 / 3))
-                * (
-                    (v - 2)[:, None, None] ** 2
-                    + (v - 2)[:, None] ** 2
-                    + (v - 2) ** 2
-                )
+                * ((v - 2)[:, None, None] ** 2 + (v - 2)[:, None] ** 2 + (v - 2) ** 2)
             )
             + np.exp(
                 -(v + 0.5)[:, None, None] ** 2
