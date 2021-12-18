@@ -8,4 +8,5 @@ matplotlib
 jupyterlab
 pyfftw
 cupy-cuda114
-params-mz @ git+https://github.com/Mayuyu/params.git
+# param-mz
+git+git://github.com/Mayuyu/params.git

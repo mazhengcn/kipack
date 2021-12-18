@@ -3,7 +3,7 @@
 {
   "name": "kipack-dev",
 
-  "build": { "dockerfile": "Dockerfile", "args": { "VARIANT": "11.4-3.9" } },
+  "build": { "dockerfile": "Dockerfile", "args": { "VARIANT": "11.4-3.8" } },
 
   // Set *default* container specific settings.json values on container create.
   "settings": {
