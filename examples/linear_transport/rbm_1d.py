@@ -157,7 +157,7 @@ def run(
 
     output_dict = {}
     sol_frames, macro_frames, ts = (
-        [copy.deepcopy(sol)],
+        [copy.deepcopy(sol.q)],
         [compute_rho(sol.state, vmesh)],
         [0.0],
     )
@@ -165,14 +165,16 @@ def run(
     for t in range(nt):
         solver.evolve_to_time(sol)
         if (t + 1) % 1 == 0:
-            sol_frames.append(copy.deepcopy(sol))
+            sol_frames.append(copy.deepcopy(sol.q))
             macro_frames.append(compute_rho(sol.state, vmesh))
             ts.append(sol.t)
         pbar.update(t + 1, finalize=False)
     pbar.update(nt, finalize=True)
 
+    output_dict["f_frames"] = np.asarray(sol_frames)[:, 0]
     output_dict["macro_frames"] = np.asarray(macro_frames)
     output_dict["x"] = np.asarray(x.centers)
     output_dict["t"] = np.asarray(ts)
+    output_dict["v"] = np.asarray(vmesh.centers[0])
 
     return output_dict

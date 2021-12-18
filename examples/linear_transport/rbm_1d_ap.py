@@ -199,14 +199,14 @@ def run(
 
     output_dict = {}
     sol_frames, macro_frames, ts = (
-        [copy.deepcopy(sol)],
+        [copy.deepcopy(sol.q)],
         [compute_rho(sol.state, vmesh)],
         [0.0],
     )
     pbar = Progbar(nt)
     for t in range(nt):
         solver.evolve_to_time(sol)
-        sol_frames.append(copy.deepcopy(sol))
+        sol_frames.append(copy.deepcopy(sol.q))
         macro_frames.append(compute_rho(sol.state, vmesh))
         # Test
         # qbc = solver.qbc
@@ -225,8 +225,10 @@ def run(
         pbar.update(t + 1, finalize=False)
     pbar.update(nt, finalize=True)
 
+    output_dict["f_frames"] = np.asarray(sol_frames)
     output_dict["macro_frames"] = macro_frames
     output_dict["x"] = x.centers
     output_dict["t"] = ts
+    output_dict["v"] = np.asarray(vmesh.centers[0])
 
     return output_dict
