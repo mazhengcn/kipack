@@ -7,5 +7,5 @@ scipy
 matplotlib
 jupyterlab
 pyfftw
+cupy-cuda114
 params-mz @ git+https://github.com/Mayuyu/params.git
--e .

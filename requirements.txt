@@ -4,6 +4,6 @@ typing
 pyyaml
 numpy
 scipy
-cupy-cuda112
+cupy
 pyfftw
 params-mz @ git+https://github.com/Mayuyu/params.git

@@ -1,15 +1,15 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.158.0/containers/python-3
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/python-3
 {
-  "name": "Kipack dev container",
-  "image": "zhengma/cupy",
+  "name": "kipack-dev",
+
+  "build": { "dockerfile": "Dockerfile", "args": { "VARIANT": "11.4-3.9" } },
 
   // Set *default* container specific settings.json values on container create.
   "settings": {
-    "terminal.integrated.shell.linux": "/usr/bin/zsh",
     "python.pythonPath": "/usr/local/bin/python",
     "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-    "python.linting.flake8Path": "/usr/local/py-utils/bin/flake8"
+    "python.formatting.provider": "black"
   },
 
   // Add the IDs of extensions you want installed when the container is created.
@@ -19,7 +19,7 @@
   // "forwardPorts": [8889],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "pip3 install --no-cache-dir -r .devcontainer/dev-requirements.txt",
+  "postCreateCommand": "pip3 install --no-cache-dir -e .",
 
   // Use 'postStartCommand' to run commands after the container is started.
   // "postStartCommand": "nohup bash -c 'jupyter lab --ip=0.0.0.0 --port=8889 --allow-root &'",
@@ -30,11 +30,10 @@
   // Runtime args.
   "runArgs": ["--name=kipack", "--gpus=all"],
 
-  // Bind working directory.
-  "workspaceMount": "source=/home/zheng/repos/kipack,target=/workspaces/kipack,type=bind,consistency=cached",
-
-  // Default working directory
-  "workspaceFolder": "/workspaces/kipack",
+  // Volume mount data folder.
+  "mounts": [
+    "source=kipack_data,target=${containerWorkspaceFolder}/data,type=volume"
+  ],
 
   // Keep container running after disconnect.
   "shutdownAction": "none"
