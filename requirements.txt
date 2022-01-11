@@ -1,9 +1,0 @@
-six
-dataclasses
-typing
-pyyaml
-numpy
-scipy
-cupy
-pyfftw
-params-mz @ git+https://github.com/Mayuyu/params.git

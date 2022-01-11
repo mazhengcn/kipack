@@ -1,12 +1,6 @@
-six
-dataclasses
-typing
-pyyaml
+absl-py
+ml-collections
 numpy
 scipy
-matplotlib
-jupyterlab
 pyfftw
-cupy-cuda114
-# param-mz
-git+git://github.com/Mayuyu/params.git
+cupy-cuda115

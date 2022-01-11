@@ -3,11 +3,11 @@
 {
   "name": "kipack-dev",
 
-  "build": { "dockerfile": "Dockerfile", "args": { "VARIANT": "11.4-3.8" } },
+  "build": { "dockerfile": "Dockerfile", "args": { "VARIANT": "3.10-11.5" } },
 
   // Set *default* container specific settings.json values on container create.
   "settings": {
-    "python.pythonPath": "/usr/local/bin/python",
+    "python.defaultInterpreterPath": "/usr/local/python/bin/python",
     "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
     "python.formatting.provider": "black"
   },
@@ -19,16 +19,13 @@
   // "forwardPorts": [8889],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "pip3 install --no-cache-dir -e .",
-
-  // Use 'postStartCommand' to run commands after the container is started.
-  // "postStartCommand": "nohup bash -c 'jupyter lab --ip=0.0.0.0 --port=8889 --allow-root &'",
+  "postCreateCommand": "pip3 install -e .",
 
   // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
   // "remoteUser": "vscode",
 
   // Runtime args.
-  "runArgs": ["--name=kipack", "--gpus=all"],
+  "runArgs": ["--name=kipack_dev", "--gpus=all"],
 
   // Volume mount data folder.
   "mounts": [
