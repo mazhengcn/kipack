@@ -2,6 +2,8 @@ import math
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+from absl import logging
+
 from kipack.collision.spherical_design import get_sphrquadrule
 
 
@@ -9,7 +11,7 @@ class BaseVMesh(object, metaclass=ABCMeta):
     def __init__(self, config, *args, **kwargs):
         # Get dimension
         self._ndim = config.collision_model.dim
-        print("{} dimensional collision model.".format(self._ndim))
+        logging.info(f"{self._ndim} dimensional collision model.")
         # Get the config
         self.config = config.velocity_mesh
         self._center = None
@@ -22,7 +24,9 @@ class BaseVMesh(object, metaclass=ABCMeta):
     def centers(self):
         if self._centers is None:
             index = np.indices(self.num_nodes)
-            self._centers = [self.center[index[i, ...]] for i in range(self.num_dim)]
+            self._centers = [
+                self.center[index[i, ...]] for i in range(self.num_dim)
+            ]
         return self._centers
 
     @property
@@ -41,7 +45,7 @@ class BaseVMesh(object, metaclass=ABCMeta):
         return vsq
 
     def get_F(self, f):
-        vaxis = tuple(-(i + 1) for i in range(self.ndim))
+        vaxis = tuple(-(i + 1) for i in range(self.num_dim))
         rho = np.sum(f * self.weights, axis=vaxis)
         m = [np.sum(f * v * self.weights, axis=vaxis) for v in self.centers]
         E = 0.5 * np.sum(f * self.vsquare * self.weights, axis=vaxis)
@@ -54,7 +58,7 @@ class BaseVMesh(object, metaclass=ABCMeta):
         usq = 0.0
         for ui in u:
             usq += ui ** 2
-        T = (2 * E / rho - usq) / self.ndim
+        T = (2 * E / rho - usq) / self.num_dim
 
         return [rho, u, T]
 
@@ -86,7 +90,7 @@ class SpectralMesh(BaseVMesh):
     def _build_velocity_mesh(self):
         # Define the velocity mesh for 2D and 3D
         self._nv = self.config.nv
-        print("Number of velocity cells: {}.".format(self._nv))
+        logging.info(f"Number of velocity cells: {self._nv}.")
 
         # Number of points on radial direction
         self._nr = self.config.nr
@@ -95,7 +99,7 @@ class SpectralMesh(BaseVMesh):
         self._S = self.config.s
         self._R = 2 * self._S
         self._L = 0.5 * (3.0 + math.sqrt(2)) * self._S
-        print("Velocity domain: [{}, {}].".format(-self._L, self._L))
+        logging.info(f"Velocity domain: [{-self._L}, {self._L}].")
 
     def _build_polar_mesh(self):
         # Number of points on the circle
@@ -106,7 +110,9 @@ class SpectralMesh(BaseVMesh):
     def _build_spherical_mesh(self):
         self._ssrule = self.config.ssrule
         self._nsphr = self.config.nsphr
-        srule = get_sphrquadrule("symmetric", rule=self._ssrule, npts=self._nsphr)
+        srule = get_sphrquadrule(
+            "symmetric", rule=self._ssrule, npts=self._nsphr
+        )
         self._spts = srule.pts
         self._wspts = 4 * math.pi / self._nsphr
 
@@ -128,18 +134,18 @@ class SpectralMesh(BaseVMesh):
 
     @property
     def ncirc_or_nsphr(self):
-        if self.ndim == 2:
+        if self.num_dim == 2:
             return self._nphi
-        elif self.ndim == 3:
+        elif self.num_dim == 3:
             return self._nsphr
         else:
             raise ValueError("Dimension must be 2 or 3.")
 
     def circ_or_sphr_quad(self):
-        if self.ndim == 2:
+        if self.num_dim == 2:
             sigma = np.stack((np.cos(self._phi), np.sin(self._phi)), axis=-1)
             return sigma, self._wphi
-        elif self.ndim == 3:
+        elif self.num_dim == 3:
             return self._spts, self._wspts
         else:
             raise ValueError("Dimension must be 2 or 3.")
@@ -182,12 +188,12 @@ class CartesianMesh(BaseVMesh):
     def _build_velocity_mesh(self):
         # Define the velocity mesh for 2D and 3D
         self._nv = self.config.nv
-        print("Number of velocity cells: {}.".format(self._nv))
+        logging.info(f"Number of velocity cells: {self._nv}.")
 
         # Define the physical domain
         self._lower = self.config.lower
         self._upper = self.config.upper
-        print("Velocity domain: [{}, {}].".format(self._lower, self._upper))
+        logging.info(f"Velocity domain: [{self._lower}, {self._upper}].")
 
         if self.config.quad_rule != "uniform":
             self._load_quadrature()
@@ -208,7 +214,9 @@ class CartesianMesh(BaseVMesh):
                 weights = weights * self._weights / (2 * self.L)
             return weights
         else:
-            return (self.delta / (2 * self.L)) ** self.num_dim * np.ones(self.num_nodes)
+            return (self.delta / (2 * self.L)) ** self.num_dim * np.ones(
+                self.num_nodes
+            )
 
     @property
     def lower(self):
@@ -235,7 +243,7 @@ class CartesianMesh(BaseVMesh):
 class PolarMesh(BaseVMesh):
     def _build_velocity_mesh(self):
         self._nv = self.config.nv
-        print("Number of velocity cells: {}.".format(self._nv))
+        logging.info(f"Number of velocity cells: {self._nv}.")
 
         # Define the phsical domain
         self._radius = self.config.radius
@@ -243,10 +251,12 @@ class PolarMesh(BaseVMesh):
         self._upper = self.config.upper
 
         if self._ndim == 2:
-            print("Velocity domain: disk with raidus {}.".format(self._radius))
+            logging.info(f"Velocity domain: disk with raidus {self._radius}.")
             self._build_polar_mesh()
         else:
-            raise ValueError("Only polar coordinate systme is implemented currently.")
+            raise ValueError(
+                "Only polar coordinate systme is implemented currently."
+            )
 
     def _build_polar_mesh(self):
         self._wphi = (self._upper - self._lower) / self._nv

@@ -1,6 +1,7 @@
 absl-py
-ml-collections
 numpy
 scipy
+matplotlib
 pyfftw
 cupy-cuda115
+git+https://github.com/google/ml_collections
