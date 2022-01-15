@@ -4,4 +4,4 @@ scipy
 matplotlib
 pyfftw
 cupy-cuda115
-git+https://github.com/google/ml_collections
+git+git://github.com/google/ml_collections
