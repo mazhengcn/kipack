@@ -2,41 +2,45 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/python-3
 {
   "name": "kipack-dev",
-
-  "build": { "dockerfile": "Dockerfile", "args": { "VARIANT": "3.10-11.5" } },
-
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "VARIANT": "3.10-11.5"
+    }
+  },
   // Set *default* container specific settings.json values on container create.
   "settings": {
+    "terminal.integrated.defaultProfile.linux": "zsh",
     "python.defaultInterpreterPath": "/usr/local/python/bin/python",
     "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-    "python.formatting.provider": "black"
+    "python.formatting.provider": "black",
+    "[python]": {
+      "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+      }
+    }
   },
-
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
     "ms-python.python",
     "ms-python.vscode-pylance",
     "eamodio.gitlens",
-    "esbenp.prettier-vscode"
   ],
-
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   // "forwardPorts": [8889],
-
   // Use 'postCreateCommand' to run commands after the container is created.
   "postCreateCommand": "pip3 install -e .",
-
   // Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
   // "remoteUser": "vscode",
-
   // Runtime args.
-  "runArgs": ["--name=kipack_dev", "--gpus=all"],
-
+  "runArgs": [
+    "--name=kipack_dev",
+    "--gpus=all"
+  ],
   // Volume mount data folder.
   "mounts": [
     "source=kipack_data,target=${containerWorkspaceFolder}/data,type=volume"
   ],
-
   // Keep container running after disconnect.
   "shutdownAction": "none"
 }
