@@ -2,9 +2,10 @@ import copy
 import math
 
 import numpy as np
+
 from examples.boltzmann.euler_1d import Euler1D
-from examples.utils import Progbar
 from kipack import collision, pykinetic
+from kipack.utils import Progbar
 
 
 def maxwellian(v, rho, u, T):
@@ -68,7 +69,9 @@ def run(
     scheme="Euler",
     euler_solver=False,
 ):
-    config = collision.utils.CollisionConfig.from_json("./configs/" + coll + ".json")
+    config = collision.utils.CollisionConfig.from_json(
+        "./configs/" + coll + ".json"
+    )
 
     vmesh = collision.SpectralMesh(config)
     if coll == "fsm":
@@ -198,7 +201,11 @@ def anisotropic_f(v):
         * (
             np.exp(
                 -(16 ** (1 / 3))
-                * ((v - 2)[:, None, None] ** 2 + (v - 2)[:, None] ** 2 + (v - 2) ** 2)
+                * (
+                    (v - 2)[:, None, None] ** 2
+                    + (v - 2)[:, None] ** 2
+                    + (v - 2) ** 2
+                )
             )
             + np.exp(
                 -(v + 0.5)[:, None, None] ** 2

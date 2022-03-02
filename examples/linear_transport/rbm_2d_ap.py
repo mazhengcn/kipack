@@ -2,9 +2,10 @@ import copy
 import math
 
 import numpy as np
-from examples.utils import Progbar
+
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver2D
+from kipack.utils import Progbar
 
 
 def phi(eps):
@@ -43,7 +44,14 @@ def compute_rho(state, vmesh):
 
 class APNeutronTransportSolver2D(BoltzmannSolver2D):
     def __init__(
-        self, riemann_solver, collision_operator, kn, sigma_s, sigma_a, Q, **kwargs
+        self,
+        riemann_solver,
+        collision_operator,
+        kn,
+        sigma_s,
+        sigma_a,
+        Q,
+        **kwargs
     ):
         self.sigma_s, self.sigma_a, self.Q = map(
             self._convert_params, [sigma_s, sigma_a, Q]
@@ -204,14 +212,21 @@ def run(
             for i in range(num_ghost):
                 qbc[::2, -i - 1] = -qbc[::2, -2 * num_ghost + i]
                 qbc[1::2, -i - 1] = (
-                    2 * (vx * 2 * qbc[::2, -num_ghost - 1] / state.grid.delta[0])
+                    2
+                    * (vx * 2 * qbc[::2, -num_ghost - 1] / state.grid.delta[0])
                     - qbc[1::2, -2 * num_ghost + i]
                 )
         elif dim.name == "y":
             for i in range(num_ghost):
                 qbc[::2, :, -i - 1] = -qbc[::2, :, -2 * num_ghost + i]
                 qbc[1::2, :, -i - 1] = (
-                    2 * (vy * 2 * qbc[::2, :, -num_ghost - 1] / state.grid.delta[1])
+                    2
+                    * (
+                        vy
+                        * 2
+                        * qbc[::2, :, -num_ghost - 1]
+                        / state.grid.delta[1]
+                    )
                     - qbc[1::2, :, -2 * num_ghost + i]
                 )
                 qbc[1, :, -i - 1] = -qbc[1, :, -i - 1]

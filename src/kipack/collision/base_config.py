@@ -69,8 +69,3 @@ def get_base_config():
     config.collision_model = ml_collections.ConfigDict(COLLISION_MODEL)
 
     return config
-
-
-if __name__ == "__main__":
-    cfg = get_base_config()
-    print(cfg.vmesh.nr)

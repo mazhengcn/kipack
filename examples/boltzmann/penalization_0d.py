@@ -2,9 +2,18 @@ import copy
 import math
 
 import numpy as np
-from kipack import collision, pykinetic
+from absl import app, flags
+from ml_collections import config_flags
 
-from ..utils import Progbar
+from kipack import collision, pykinetic
+from kipack.utils import Progbar
+
+FLAGS = flags.FLAGS
+
+_CONFIG = config_flags.DEFINE_config_file(
+    name="config",
+    help_string="Configuration file.",
+)
 
 
 class PenalizationSolver0D(pykinetic.BoltzmannSolver0D):
@@ -45,10 +54,8 @@ rkcoeff = {
 }
 
 
-def run(kn=1.0, tau=0.1, p=1.0, dt=0.01, nt=1000, scheme="Euler"):
-    config = collision.utils.CollisionConfig.from_json(
-        "./configs/penalty.json"
-    )
+def main(kn=1.0, tau=0.1, p=1.0, dt=0.01, nt=1000, scheme="Euler"):
+    config = collision.utils.CollisionConfig.from_json("./configs/penalty.json")
     vmesh = collision.SpectralMesh(config)
     coll_op = collision.FSInelasticVHSCollision(config, vmesh)
 
@@ -162,3 +169,7 @@ def anisotropic_f(v):
             )
         )
     )
+
+
+if __name__ == "__main__":
+    app.run(main)

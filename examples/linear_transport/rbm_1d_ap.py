@@ -2,9 +2,10 @@ import copy
 import math
 
 import numpy as np
+
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
-from utils import Progbar
+from kipack.utils import Progbar
 
 
 def phi(eps):
@@ -12,7 +13,11 @@ def phi(eps):
 
 
 def maxwellian_vec_init(v, u, T, rho):
-    return rho[:, None] / np.sqrt(2 * math.pi * T) * np.exp(-((v - u) ** 2) / (2 * T))
+    return (
+        rho[:, None]
+        / np.sqrt(2 * math.pi * T)
+        * np.exp(-((v - u) ** 2) / (2 * T))
+    )
 
 
 def qinit(state, vmesh, kn, init_func=None):
@@ -34,7 +39,14 @@ def compute_rho(state, vmesh):
 
 class APNeutronTransportSolver1D(BoltzmannSolver1D):
     def __init__(
-        self, riemann_solver, collision_operator, kn, sigma_s, sigma_a, Q, **kwargs
+        self,
+        riemann_solver,
+        collision_operator,
+        kn,
+        sigma_s,
+        sigma_a,
+        Q,
+        **kwargs
     ):
         self.sigma_s, self.sigma_a, self.Q = map(
             self._convert_params, [sigma_s, sigma_a, Q]
@@ -72,7 +84,9 @@ class APNeutronTransportSolver1D(BoltzmannSolver1D):
         # Update j
         phi = state.problem_data["phi"]
         v = state.problem_data["v"][0]
-        state.q[1, :] = state.q[1, :] - dt_kn2 * (1.0 - self.kn ** 2 * phi) * v * dr_dx
+        state.q[1, :] = (
+            state.q[1, :] - dt_kn2 * (1.0 - self.kn ** 2 * phi) * v * dr_dx
+        )
         state.q[1, :] /= 1.0 + dt_kn2 * self.sigma_s
 
     def dq(self, state):
@@ -158,9 +172,9 @@ def run(
         v = state.problem_data["v"][0] / sigma_l
         kn_dx = kn_l / state.grid.delta[0]
         for i in range(num_ghost):
-            qbc[0, i, :] = (f_l(v) - (0.5 - kn_dx * v) * qbc[0, num_ghost, :]) / (
-                0.5 + kn_dx * v
-            )
+            qbc[0, i, :] = (
+                f_l(v) - (0.5 - kn_dx * v) * qbc[0, num_ghost, :]
+            ) / (0.5 + kn_dx * v)
         for i in range(num_ghost):
             qbc[1, i, :] = (
                 2 * f_l(v) - (qbc[0, num_ghost - 1, :] + qbc[0, num_ghost, :])

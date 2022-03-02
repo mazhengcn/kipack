@@ -2,14 +2,19 @@ import copy
 import math
 
 import numpy as np
-from examples.utils import Progbar
+
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver2D
+from kipack.utils import Progbar
 
 
 def maxwellian_vec_init(vmesh, u, T, rho):
     v = vmesh.center
-    return rho[:, None] / np.sqrt(2 * math.pi * T) * np.exp(-((v - u) ** 2) / (2 * T))
+    return (
+        rho[:, None]
+        / np.sqrt(2 * math.pi * T)
+        * np.exp(-((v - u) ** 2) / (2 * T))
+    )
 
 
 def qinit(state, vmesh, init_func):
@@ -26,7 +31,14 @@ def compute_rho(state, vmesh):
 
 class DiffusiveRegimeSolver2D(BoltzmannSolver2D):
     def __init__(
-        self, riemann_solver, collision_operator, kn, sigma_s, sigma_a, Q, **kwargs
+        self,
+        riemann_solver,
+        collision_operator,
+        kn,
+        sigma_s,
+        sigma_a,
+        Q,
+        **kwargs
     ):
         self.sigma_s, self.sigma_a, self.Q = map(
             self._convert_params, [sigma_s, sigma_a, Q]
@@ -125,7 +137,9 @@ def run(
                 qbc[0, -i - 1, :, (vx < 0)[0], :] = f_r(vx[(vx < 0)[0]], vy)
         elif dim.name == "y":
             for i in range(num_ghost):
-                qbc[0, :, -i - 1, :, (vy < 0)[:, 0]] = f_t(vx, vy[(vy < 0)[:, 0]])
+                qbc[0, :, -i - 1, :, (vy < 0)[:, 0]] = f_t(
+                    vx, vy[(vy < 0)[:, 0]]
+                )
         else:
             raise ValueError("Dim could be only 'x' or 'y'.")
 

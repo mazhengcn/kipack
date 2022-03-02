@@ -2,9 +2,10 @@ import copy
 import math
 
 import numpy as np
+
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
-from utils import Progbar
+from kipack.utils import Progbar
 
 rkcoeff = {
     "RK3": {
@@ -43,7 +44,11 @@ def sigma(v, w):
 
 def maxwellian_vec_init(vmesh, u, T, rho):
     v = vmesh.center
-    return rho[:, None] / np.sqrt(2 * math.pi * T) * np.exp(-((v - u) ** 2) / (2 * T))
+    return (
+        rho[:, None]
+        / np.sqrt(2 * math.pi * T)
+        * np.exp(-((v - u) ** 2) / (2 * T))
+    )
 
 
 def qinit(state, vmesh, init_func):
@@ -55,7 +60,9 @@ def qinit(state, vmesh, init_func):
 def compute_rho(state, vmesh):
     vaxis = tuple(-(i + 1) for i in range(vmesh.num_dim))
     v, w = vmesh.center, vmesh.weights
-    return np.sqrt(np.pi) * np.sum(state.q[0, ...] * w * np.exp(v ** 2), axis=vaxis)
+    return np.sqrt(np.pi) * np.sum(
+        state.q[0, ...] * w * np.exp(v ** 2), axis=vaxis
+    )
 
 
 class DiffusiveRegimeSolver1D(BoltzmannSolver1D):
@@ -105,7 +112,9 @@ def run(
             config, vmesh, sigma=sigma
         )
     elif coll == "rbm_symm":
-        coll_op = collision.SymmetricRBMLinearCollision(config, vmesh, sigma=sigma)
+        coll_op = collision.SymmetricRBMLinearCollision(
+            config, vmesh, sigma=sigma
+        )
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)

@@ -1,17 +1,20 @@
 import cupy as cp
 import numpy as np
-from kipack.collision.base import BaseCollision
+
+from .base import Collision
 
 
-class LinearCollision(BaseCollision):
+class LinearCollision(Collision):
+    """A simple linear collision, e.g., linear transport collision."""
+
     def load_parameters(self):
         self._cpu_weights = np.asarray(self.vm.weights)
         self._built_cpu = True
 
-    def _build_cpu(self, input_shape):
+    def _build_cpu(self, input_shape: list[int] | tuple[int]):
         self._input_shape = input_shape
 
-    def _build_gpu(self, input_shape):
+    def _build_gpu(self, input_shape: list[int] | tuple[int]):
         self._gpu_weights = cp.asarray(self._cpu_weights)
         self._input_shape = input_shape
         self._built_gpu = True
@@ -22,7 +25,7 @@ class LinearCollision(BaseCollision):
     def _set_to_cpu(self):
         self.weights = self._cpu_weights
 
-    def collide(self, input_f):
+    def collide(self, input_f: np.ndarray):
         xp = cp.get_array_module(input_f)
         f = input_f
         vaxis = tuple(-(i + 1) for i in range(self.num_dim))

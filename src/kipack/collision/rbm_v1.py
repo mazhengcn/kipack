@@ -2,10 +2,10 @@ import math
 
 import numpy as np
 
-from kipack.collision.base import BaseCollision
+from .base import Collision
 
 
-class RandomBatchCollisionV1(BaseCollision):
+class RandomBatchCollisionV1(Collision):
     def load_parameters(self):
         # Load collision model (e and gamma)
         self.nv = self.vm.nv

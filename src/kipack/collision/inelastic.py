@@ -6,10 +6,11 @@ import pyfftw
 from absl import logging
 from scipy import special
 
-from kipack.collision.base import BaseCollision
+from .base import Collision
 
 
-class FSInelasticVHSCollision(BaseCollision):
+class FSInelasticVHSCollision(Collision):
+    """Fast spectral method to compute (in)elastic collsions."""
 
     collision_model = "vhs"
 
@@ -18,6 +19,8 @@ class FSInelasticVHSCollision(BaseCollision):
         return self._e
 
     def load_parameters(self):
+        """Load computation parameters."""
+
         # Load collision model (e and gamma)
         collision_model = self.config.collision_model
         self._e = collision_model.e
@@ -45,6 +48,8 @@ class FSInelasticVHSCollision(BaseCollision):
         return self._sphr_fac * r ** (self._gamma + self.num_dim - 1)
 
     def perform_precomputation(self):
+        """Perform precomputation."""
+
         # Spectral index
         # Compute index for spectral method
         n = self.vm.nv
@@ -121,7 +126,7 @@ class FSInelasticVHSCollision(BaseCollision):
 
         logging.info("Collision model precomputation finished!")
 
-    def _build_cpu(self, input_shape):
+    def _build_cpu(self, input_shape: list[int] | tuple[int]):
         # Pyfftw routines
         # Pyfftw config
         pyfftw.config.NUM_THREADS = 8
@@ -156,7 +161,7 @@ class FSInelasticVHSCollision(BaseCollision):
         # Set built as true
         self._built_cpu = True
 
-    def _build_gpu(self, input_shape):
+    def _build_gpu(self, input_shape: list[int] | tuple[int]):
         # Compute axis
         axis = tuple(-(i + 1) for i in range(self.num_dim))
 
@@ -192,7 +197,17 @@ class FSInelasticVHSCollision(BaseCollision):
         self.ffts = self.ffts_gpu
         self.iffts = self.iffts_gpu
 
-    def collide(self, input_f):
+    def collide(
+        self, input_f: np.ndarray | cp.ndarray
+    ) -> np.ndarray | cp.ndarray:
+        """Compute the collision for given density function f
+
+        Arguments:
+            input_f: density function has shape [..., vmesh]
+
+        Returns:
+            collision results
+        """
         # fft of input
         f_hat = self.ffts[0](input_f)
         # Gain
@@ -210,11 +225,15 @@ class FSInelasticVHSCollision(BaseCollision):
         # Output
         return (gain / (self._sphr_fac) - loss).real
 
-    def laplacian(self, input_f):
+    def laplacian(self, input_f: np.ndarray) -> np.ndarray:
         return self.iffts[0](self.kernels["lapl"] * self.ffts[0](input_f)).real
 
 
-def _broadcast_kernels(kernels, dim, num_extr_dim):
+def _broadcast_kernels(
+    kernels: dict[str, np.ndarray], dim: int, num_extr_dim: int
+) -> dict[str, np.ndarray]:
+    """Compute broadcasted shapes."""
+
     # Expand gain kernels
     expand_loss_slice = (slice(None),) + (None,) * num_extr_dim
     kernels["loss"] = kernels["loss"].squeeze()[

@@ -2,9 +2,10 @@ import copy
 import math
 
 import numpy as np
+
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
-from utils import Progbar
+from kipack.utils import Progbar
 
 rkcoeff = {
     "RK3": {
@@ -29,7 +30,11 @@ rkcoeff = {
 
 def maxwellian_vec_init(vmesh, u, T, rho):
     v = vmesh.center
-    return rho[:, None] / np.sqrt(2 * math.pi * T) * np.exp(-((v - u) ** 2) / (2 * T))
+    return (
+        rho[:, None]
+        / np.sqrt(2 * math.pi * T)
+        * np.exp(-((v - u) ** 2) / (2 * T))
+    )
 
 
 def qinit(state, vmesh, init_func):
@@ -45,7 +50,14 @@ def compute_rho(state, vmesh):
 
 class DiffusiveRegimeSolver1D(BoltzmannSolver1D):
     def __init__(
-        self, riemann_solver, collision_operator, kn, sigma_s, sigma_a, Q, **kwargs
+        self,
+        riemann_solver,
+        collision_operator,
+        kn,
+        sigma_s,
+        sigma_a,
+        Q,
+        **kwargs
     ):
         self.sigma_s, self.sigma_a, self.Q = map(
             self._convert_params, [sigma_s, sigma_a, Q]

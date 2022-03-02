@@ -62,7 +62,9 @@ class Euler2D(object):
         self._solution = solution
         self._claw = claw
 
-    def set_initial(self, rho_mean, rho_var, ux=0.0, uy=0.0, T=1.0, dist="uniform"):
+    def set_initial(
+        self, rho_mean, rho_var, ux=0.0, uy=0.0, T=1.0, dist="uniform"
+    ):
         self._solution.t = 0.0
         # Set initial data
         xx, _ = self._domain.grid.p_centers
@@ -90,7 +92,8 @@ class Euler2D(object):
 
         _, axes = plt.subplots(figsize=(8, 6))
         cs = axes.contourf(
-            self._claw.solution.q[energy, ...] / self._claw.solution.q[density, ...]
+            self._claw.solution.q[energy, ...]
+            / self._claw.solution.q[density, ...]
             - 0.5
             * (
                 self._claw.solution.q[x_momentum, ...] ** 2

@@ -1,9 +1,10 @@
 import cupy as cp
 import numpy as np
-from kipack.collision.base import BaseCollision
+
+from .base import Collision
 
 
-class RandomBatchLinearCollision(BaseCollision):
+class RandomBatchLinearCollision(Collision):
     def load_parameters(self):
         self.nv = self.vm.nv
         # print(self.nv)

@@ -1,9 +1,9 @@
 import math
 
-import numpy as np
 import cupy as cp
+import numpy as np
 
-from kipack.collision.base import BaseCollision
+from .base import Collision
 
 
 def collision_kernel(idx_k, idx_l, xp):
@@ -13,7 +13,7 @@ def collision_kernel(idx_k, idx_l, xp):
     ) / 4 * math.pi
 
 
-class RandomBatchCollisionV2(BaseCollision):
+class RandomBatchCollisionV2(Collision):
     def load_parameters(self):
         self.eps = None
         # Load collision model (e and gamma)

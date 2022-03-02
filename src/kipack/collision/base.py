@@ -1,9 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
 import cupy as cp
+import numpy as np
 
 
-class BaseCollision(object, metaclass=ABCMeta):
+class Collision(object, metaclass=ABCMeta):
     def __init__(self, config, velocity_mesh, **kwargs):
 
         # Load configuration
@@ -30,7 +31,14 @@ class BaseCollision(object, metaclass=ABCMeta):
         self._built_gpu = False
         self._input_shape = None
 
-    def __call__(self, input_f, heat_bath=None, device="cpu"):
+    def __call__(
+        self,
+        input_f: np.ndarray,
+        heat_bath: np.ndarray | None = None,
+        device: str = "cpu",
+    ) -> np.ndarray:
+        """Compute one step collision."""
+
         output = None
         if device == "cpu":
             if not self._built_cpu or input_f.shape != self._input_shape:
@@ -60,11 +68,11 @@ class BaseCollision(object, metaclass=ABCMeta):
         return output
 
     # get primitive macroscopic quantities [rho, u, T]
-    def get_p(self, input_f):
+    def get_p(self, input_f: np.ndarray):
         return self.vm.get_p(input_f)
 
     # get conserved macroscopic quantities [rho, m, E]
-    def get_F(self, input_f):
+    def get_F(self, input_f: np.ndarray):
         return self.vm.get_F(input_f)
 
     @abstractmethod

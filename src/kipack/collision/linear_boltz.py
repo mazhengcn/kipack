@@ -1,9 +1,10 @@
 import cupy as cp
 import numpy as np
-from kipack.collision.base import BaseCollision
+
+from .base import Collision
 
 
-class LinearBotlzmannCollision(BaseCollision):
+class LinearBotlzmannCollision(Collision):
     def load_parameters(self):
         self.nv = self.vm.nv
 
@@ -93,7 +94,11 @@ class RandomBatchLinearBoltzmannCollision(LinearBotlzmannCollision):
             weights_batch = self.nv * self.weights[idx, idx]
 
         col = (
-            self.maxwellian_mat * exp_batch * sigma_batch * f_batch * weights_batch
+            self.maxwellian_mat
+            * exp_batch
+            * sigma_batch
+            * f_batch
+            * weights_batch
             - self.col_freq * f
         )
         return col

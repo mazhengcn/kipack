@@ -2,10 +2,11 @@ import math
 
 import cupy as cp
 import numpy as np
-from kipack.collision.base import BaseCollision
+
+from .base import Collision
 
 
-class RandomBatchCollisionParticle(BaseCollision):
+class RandomBatchCollisionParticle(Collision):
     def load_parameters(self):
         self.eps = None
         # Load collision model (e and gamma)
