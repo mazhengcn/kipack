@@ -1,7 +1,0 @@
-absl-py
-numpy
-scipy
-matplotlib
-pyfftw
-cupy-cuda115
-git+git://github.com/google/ml_collections

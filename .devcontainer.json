@@ -1,0 +1,45 @@
+{
+    "build": {
+        "dockerfile": "./docker/Dockerfile"
+    },
+    // 👇 Features to add to the Dev Container. More info: https://containers.dev/implementors/features.
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": true,
+            "installOhMyZsh": true,
+            "configureZshAsDefaultShell": true,
+            "upgradePackages": true,
+            "username": "none"
+        },
+        "ghcr.io/mazhengcn/devcontainer-features/starship:1": {}
+    },
+    // 👇 Configure tool-specific properties.
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/opt/kipackenv/bin/python"
+            }
+            "extensions": [
+                "ms-python.python",
+                "ms-python.pylance",
+                "ms-python.flake8",
+                "ms-python.black-formatter",
+                "ms-python.isort"
+            ]
+        }
+    },
+    "runArgs": [
+        "--gpus",
+        "all",
+        "--ipc",
+        "host"
+    ],
+    "mounts": [
+        {
+            "source": "kipack_data",
+            "target": "${containerWorkspaceFolder}/data",
+            "type": "volume"
+        }
+    ],
+    "postCreateCommand": "python -m pip install -e ."
+}
