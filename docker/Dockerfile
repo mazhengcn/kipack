@@ -13,7 +13,6 @@ FROM nvidia/cuda:${CUDA_VERSION}.${CUDA_PATCH_VERSION}-cudnn${CUDNN_MAJOR_VERSIO
 FROM python:${PYTHON_VERSION}-slim AS py
 ARG JAX_VERSION
 ARG VENV_PATH
-
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get install -y --no-install-recommends \
@@ -22,7 +21,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 RUN python -m venv ${VENV_PATH}
-
 ENV PATH=${VENV_PATH}/bin:$PATH
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html \
@@ -31,8 +29,8 @@ RUN pip install --no-cache-dir --upgrade pip \
     ml-collections \
     numpy \
     pyfftw \
-    cupy-cuda11x \
-    https://files.pythonhosted.org/packages/7b/3a/6b727ea26bf2945946e474ce93988722bdadffe6b9c1c1ec3935ed0806ec/clawpack-5.9.0.tar.gz
+    cupy-cuda11x
+RUN pip install --no-cache-dir https://files.pythonhosted.org/packages/7b/3a/6b727ea26bf2945946e474ce93988722bdadffe6b9c1c1ec3935ed0806ec/clawpack-5.9.0.tar.gz
 
 FROM python:${PYTHON_VERSION}-slim
 ARG PYTHON_VERSION
@@ -42,6 +40,7 @@ ARG CUDA_VERSION
 ARG CUDNN_MAJOR_VERSION
 # Python packages
 COPY --from=py ${VENV_PATH} ${VENV_PATH}
+COPY --from=py /usr/lib/x86_64-linux-gnu/libgomp.so.1 /usr/lib/x86_64-linux-gnu/libgomp.so.1
 # CUDA libraries
 COPY --from=lib /usr/local/cuda/compat /usr/local/cuda/compat
 COPY --from=lib /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
