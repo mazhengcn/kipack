@@ -1,6 +1,7 @@
 import math
 
-import cupy as cp
+import jax
+import jax.numpy as jnp
 import numpy as np
 import pyfftw
 from absl import logging
@@ -41,7 +42,9 @@ class FSInelasticVHSCollision(Collision):
 
         # Sphere area constant
         self._sphr_fac = (
-            2 * math.pi ** (0.5 * self.num_dim) / math.gamma(0.5 * self.num_dim)
+            2
+            * math.pi ** (0.5 * self.num_dim)
+            / math.gamma(0.5 * self.num_dim)
         )
 
     def _pre_fac(self, r):
@@ -56,12 +59,12 @@ class FSInelasticVHSCollision(Collision):
         # Spectral index and norm
         idx = np.fft.fftshift(np.arange(-int(n / 2), int(n / 2)))
         # idx_norm has shape (nv, nv, nv) or (nv, nv)
-        idx_norm, idx_square = 0, idx ** 2
+        idx_norm, idx_square = 0, idx**2
         for i in range(self.num_dim):
             idx_norm = idx_norm + idx_square[(...,) + (None,) * i]
         idx_norm = np.sqrt(idx_norm)
         # Laplacian
-        lapl = -math.pi ** 2 / self.vm.L ** 2 * idx_norm ** 2
+        lapl = -math.pi**2 / self.vm.L**2 * idx_norm**2
 
         # Quadrature points and weights
         r, wr = self.vm.rquad()
@@ -110,11 +113,11 @@ class FSInelasticVHSCollision(Collision):
         }
 
         # Copy arrays to GPU
-        gain_kern_gpu = cp.asarray(gain_kern)
-        exp_gpu = cp.asarray(exp)
-        loss_kern_gpu = cp.asarray(loss_kern)
-        sp_gpu = cp.asarray(sp)
-        lapl_gpu = cp.asarray(lapl)
+        gain_kern_gpu = jnp.array(gain_kern)
+        exp_gpu = jnp.array(exp)
+        loss_kern_gpu = jnp.array(loss_kern)
+        sp_gpu = jnp.array(sp)
+        lapl_gpu = jnp.array(lapl)
         # GPU kernels as a dict
         self._gpu_kernels = {
             "gain": gain_kern_gpu,
@@ -167,10 +170,10 @@ class FSInelasticVHSCollision(Collision):
 
         # cufft
         def cufft(x):
-            return cp.fft.fftn(x, axes=axis)
+            return jnp.fft.fftn(x, axes=axis)
 
         def cuifft(x):
-            return cp.fft.ifftn(x, axes=axis)
+            return jnp.fft.ifftn(x, axes=axis)
 
         # cufft = lambda x: cp.fft.fftn(x, axes=axis)
         # cuifft = lambda x: cp.fft.ifftn(x, axes=axis)
@@ -198,8 +201,8 @@ class FSInelasticVHSCollision(Collision):
         self.iffts = self.iffts_gpu
 
     def collide(
-        self, input_f: np.ndarray | cp.ndarray
-    ) -> np.ndarray | cp.ndarray:
+        self, input_f: np.ndarray | jax.Array
+    ) -> np.ndarray | jax.Array:
         """Compute the collision for given density function f
 
         Arguments:

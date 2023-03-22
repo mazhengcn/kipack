@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
-import cupy as cp
+import jax.numpy as jnp
 import numpy as np
 
 
@@ -57,14 +57,12 @@ class Collision(object, metaclass=ABCMeta):
             # Select cpu
             self._set_to_gpu()
             # Copy input to gpu
-            gpu_f = cp.asarray(input_f)
+            gpu_f = jnp.array(input_f)
             # Collide
             output = self.collide(gpu_f)
             if heat_bath:
-                output += heat_bath * self.laplacian(gpu_f)
+                output += heat_bath * self.laplacian(input_f)
             # Copy back to cpu
-            output = output.get()
-
         return output
 
     # get primitive macroscopic quantities [rho, u, T]
