@@ -5,6 +5,7 @@ from kipack.collision.linear import LinearCollision
 from kipack.collision.linear_boltz import (
     LinearBotlzmannCollision,
     RandomBatchLinearBoltzmannCollision,
+    SymmetricRBMLinearBoltzmannCollision,
 )
 from kipack.collision.rbm_linear import (
     RandomBatchLinearCollision,

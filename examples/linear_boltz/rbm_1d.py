@@ -7,6 +7,8 @@ from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
 from kipack.utils import Progbar
 
+from .configs import config
+
 rkcoeff = {
     "RK3": {
         "a": np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0], [-1.0, 2.0, 0.0]]),
@@ -32,13 +34,13 @@ omega, C = 1.0, 50 * np.exp(1.0)
 
 
 def smoothed_delta(v):
-    return np.exp(-C * v ** 2)
+    return np.exp(-C * v**2)
 
 
 def sigma(v, w):
-    tmp = np.exp(-(v ** 2)) * smoothed_delta(v ** 2 - w ** 2 + omega) + np.exp(
-        -(w ** 2)
-    ) * smoothed_delta(v ** 2 - w ** 2 - omega)
+    tmp = np.exp(-(v**2)) * smoothed_delta(v**2 - w**2 + omega) + np.exp(
+        -(w**2)
+    ) * smoothed_delta(v**2 - w**2 - omega)
     return 1 / np.sqrt(np.pi) * tmp
 
 
@@ -61,7 +63,7 @@ def compute_rho(state, vmesh):
     vaxis = tuple(-(i + 1) for i in range(vmesh.num_dim))
     v, w = vmesh.center, vmesh.weights
     return np.sqrt(np.pi) * np.sum(
-        state.q[0, ...] * w * np.exp(v ** 2), axis=vaxis
+        state.q[0, ...] * w * np.exp(v**2), axis=vaxis
     )
 
 
@@ -99,21 +101,21 @@ def run(
     init_func=lambda vmesh, u, T, rho: 0.0,
 ):
     # Load config
-    config = collision.utils.CollisionConfig.from_json(
-        "./linear_boltz/configs/" + "linear" + ".json"
-    )
+    cfg = config.get_config("linear")
 
     # Collision
-    vmesh = collision.CartesianMesh(config)
+    vmesh = collision.CartesianMesh(cfg)
     if coll == "linear":
-        coll_op = collision.LinearBotlzmannCollision(config, vmesh, sigma=sigma)
+        coll_op = collision.LinearBotlzmannCollision(
+            cfg, vmesh, sigma=sigma, device="gpu"
+        )
     elif coll == "rbm":
         coll_op = collision.RandomBatchLinearBoltzmannCollision(
-            config, vmesh, sigma=sigma
+            cfg, vmesh, seed=0, sigma=sigma, device="gpu"
         )
     elif coll == "rbm_symm":
-        coll_op = collision.SymmetricRBMLinearCollision(
-            config, vmesh, sigma=sigma
+        coll_op = collision.SymmetricRBMLinearBoltzmannCollision(
+            cfg, vmesh, seed=0, sigma=sigma, device="gpu"
         )
     else:
         raise NotImplementedError(

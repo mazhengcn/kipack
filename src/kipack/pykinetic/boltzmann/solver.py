@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 import numpy as np
+
 from kipack.pykinetic.limiters import recon, tvd
 from kipack.pykinetic.solver import Solver
 
@@ -214,8 +215,8 @@ class BoltzmannSolver(Solver):
                 if self.time_integrator == "SSPLMMk2":
                     assert (
                         3 <= self.lmm_steps
-                    ), "Must set solver.lmm_steps greater than 2 for 2nd order \
-                        SSPLMM integrator."
+                    ), "Must set solver.lmm_steps greater than 2 \
+                        for 2nd order SSPLMM integrator."
                     self.sspcoeff = (self.lmm_steps - 2.0) / (
                         self.lmm_steps - 1.0
                     )
@@ -721,8 +722,8 @@ class BoltzmannSolver1D(BoltzmannSolver):
     def __init__(
         self, riemann_solver=None, collision_operator=None, kn=1.0, **kwargs
     ):
-        self.tau = kwargs.get("heat_bath", None)
-        self.device = kwargs.get("device", "gpu")
+        self.tau = kwargs.get("heat_bath", 0.0)
+        # self.device = kwargs.get("device", "gpu")
         self.kn = self._convert_params(kn)
 
         self.num_dim = 1
@@ -733,8 +734,7 @@ class BoltzmannSolver1D(BoltzmannSolver):
         collisions = np.zeros(state.q.shape)
         for i in range(state.num_eqn):
             collisions[i, :] = self.coll[i](
-                state.q[i, :], heat_bath=self.tau, device=self.device
-            )
+                state.q[i, :], heat_bath=self.tau)
 
         return collisions * self.dt / self.kn
 

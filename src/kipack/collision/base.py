@@ -1,11 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
-import jax.numpy as jnp
 import numpy as np
 
 
 class Collision(object, metaclass=ABCMeta):
-    def __init__(self, config, velocity_mesh, **kwargs):
+    def __init__(self, config, velocity_mesh, heat_bath=None, device="cpu"):
 
         # Load configuration
         self.config = config
@@ -18,51 +17,34 @@ class Collision(object, metaclass=ABCMeta):
             velocity dimensions from collision model! This may be caused by \
             using different config files. Please check the consistency."
 
-        if "sigma" in kwargs.keys():
-            self.sigma = kwargs["sigma"]
-
+        self.heat_bath = heat_bath
+        # Device: cpu or gpu
+        self.device = device
         # Read model parameters
         self.load_parameters()
-
         # Perform precomputation
         self.perform_precomputation()
 
-        self._built_cpu = False
-        self._built_gpu = False
+        if self.device == "cpu":
+            self.build = self._build_cpu
+        elif self.device == "gpu":
+            self.build = self._build_gpu
+        else:
+            raise ValueError("Device must be 'cpu' or 'gpu'.")
+
+        self._built = False
         self._input_shape = None
 
-    def __call__(
-        self,
-        input_f: np.ndarray,
-        heat_bath: np.ndarray | None = None,
-        device: str = "cpu",
-    ) -> np.ndarray:
+    def __call__(self, input_f, heat_bath=0.0):
         """Compute one step collision."""
+        if not self._built:
+            self.build(input_f.shape)
 
-        output = None
-        if device == "cpu":
-            if not self._built_cpu or input_f.shape != self._input_shape:
-                # Broadcast kernels and build
-                self._build_cpu(input_f.shape)
-            # Select cpu
-            self._set_to_cpu()
-            # Collide
-            output = self.collide(input_f)
-            if heat_bath:
-                output += heat_bath * self.laplacian(input_f)
-        elif device == "gpu":
-            if not self._built_gpu or input_f.shape != self._input_shape:
-                # Broadcast kernels and build
-                self._build_gpu(input_f.shape)
-            # Select cpu
-            self._set_to_gpu()
-            # Copy input to gpu
-            gpu_f = jnp.array(input_f)
-            # Collide
-            output = self.collide(gpu_f)
-            if heat_bath:
-                output += heat_bath * self.laplacian(input_f)
-            # Copy back to cpu
+        output = self.collide(input_f)
+
+        if heat_bath:
+            output += heat_bath * self.laplacian(input_f)
+
         return output
 
     # get primitive macroscopic quantities [rho, u, T]
@@ -75,8 +57,4 @@ class Collision(object, metaclass=ABCMeta):
 
     @abstractmethod
     def load_parameters(self):
-        pass
-
-    @abstractmethod
-    def collide(self, input_f):
         pass

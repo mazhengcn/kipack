@@ -104,35 +104,25 @@ class FSInelasticVHSCollision(Collision):
         # Special function
         sp = self._sp_func(math.pi * r_loss * idx_norm / self.vm.L)
         # CPU Kernels as a dict
-        self._cpu_kernels = {
+        self._kernels = {
             "gain": gain_kern,
             "exp": exp,
             "loss": loss_kern,
             "sp": sp,
             "lapl": lapl,
         }
+        if self.device == "gpu":
+            # Copy arrays to GPU
+            self._kernels = jax.tree_map(jnp.asarray, self._kernels)
 
-        # Copy arrays to GPU
-        gain_kern_gpu = jnp.array(gain_kern)
-        exp_gpu = jnp.array(exp)
-        loss_kern_gpu = jnp.array(loss_kern)
-        sp_gpu = jnp.array(sp)
-        lapl_gpu = jnp.array(lapl)
-        # GPU kernels as a dict
-        self._gpu_kernels = {
-            "gain": gain_kern_gpu,
-            "exp": exp_gpu,
-            "loss": loss_kern_gpu,
-            "sp": sp_gpu,
-            "lapl": lapl_gpu,
-        }
-
-        logging.info("Collision model precomputation finished!")
+        logging.info(
+            "Collision model precomputation on %s has finished!", self.device
+        )
 
     def _build_cpu(self, input_shape: list[int] | tuple[int]):
         # Pyfftw routines
         # Pyfftw config
-        pyfftw.config.NUM_THREADS = 8
+        pyfftw.config.NUM_THREADS = 64
         pyfftw.config.PLANNER_EFFORT = "FFTW_ESTIMATE"
         # Compute axis
         axis = tuple(-(i + 1) for i in range(self.num_dim))
@@ -151,18 +141,18 @@ class FSInelasticVHSCollision(Collision):
         fftw2 = pyfftw.builders.fftn(arr2, axes=axis)
         ifftw2 = pyfftw.builders.ifftn(arr2, axes=axis)
         # ffts dict (cpu)
-        self.ffts_cpu = [fftw0, fftw1, fftw2]
-        self.iffts_cpu = [ifftw0, ifftw1, ifftw2]
+        self.ffts = [fftw0, fftw1, fftw2]
+        self.iffts = [ifftw0, ifftw1, ifftw2]
 
         # Broadcast kernels
         num_extr_dim = len(input_shape) - self.num_dim
-        self._cpu_kernels = _broadcast_kernels(
-            self._cpu_kernels, self.num_dim, num_extr_dim
+        self.kernels = _broadcast_kernels(
+            self._kernels, self.num_dim, num_extr_dim
         )
         # Save shape
         self._input_shape = input_shape
         # Set built as true
-        self._built_cpu = True
+        self._built = True
 
     def _build_gpu(self, input_shape: list[int] | tuple[int]):
         # Compute axis
@@ -177,28 +167,18 @@ class FSInelasticVHSCollision(Collision):
 
         # cufft = lambda x: cp.fft.fftn(x, axes=axis)
         # cuifft = lambda x: cp.fft.ifftn(x, axes=axis)
-        self.ffts_gpu = [cufft] * 3
-        self.iffts_gpu = [cuifft] * 3
+        self.ffts = [cufft] * 3
+        self.iffts = [cuifft] * 3
 
         # Broadcast kernels
         num_extr_dim = len(input_shape) - self.num_dim
-        self._gpu_kernels = _broadcast_kernels(
-            self._gpu_kernels, self.num_dim, num_extr_dim
+        self.kernels = _broadcast_kernels(
+            self._kernels, self.num_dim, num_extr_dim
         )
         # Save shape
         self._input_shape = input_shape
         # Set built as true
-        self._built_gpu = True
-
-    def _set_to_cpu(self):
-        self.kernels = self._cpu_kernels
-        self.ffts = self.ffts_cpu
-        self.iffts = self.iffts_cpu
-
-    def _set_to_gpu(self):
-        self.kernels = self._gpu_kernels
-        self.ffts = self.ffts_gpu
-        self.iffts = self.iffts_gpu
+        self._built = True
 
     def collide(
         self, input_f: np.ndarray | jax.Array
@@ -228,7 +208,9 @@ class FSInelasticVHSCollision(Collision):
         # Output
         return (gain / (self._sphr_fac) - loss).real
 
-    def laplacian(self, input_f: np.ndarray) -> np.ndarray:
+    def laplacian(
+        self, input_f: np.ndarray | jax.Array
+    ) -> np.ndarray | jax.Array:
         return self.iffts[0](self.kernels["lapl"] * self.ffts[0](input_f)).real
 
 

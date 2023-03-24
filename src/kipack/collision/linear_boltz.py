@@ -1,57 +1,38 @@
-import cupy as cp
+# import cupy as cp
+import jax
+import jax.numpy as jnp
 import numpy as np
 
 from .base import Collision
 
 
 class LinearBotlzmannCollision(Collision):
+    def __init__(
+        self, config, velocity_mesh, sigma=None, heat_bath=None, device="cpu"
+    ):
+        self.sigma = sigma
+        super().__init__(config, velocity_mesh, heat_bath, device)
+
+        self._collide = jax.jit(self._collide)
+
+    def collide(self, input_f):
+        return self._collide(input_f)
+
     def load_parameters(self):
         self.nv = self.vm.nv
 
     def _build_cpu(self, input_shape):
-        self._cpu_weights = self._weights
-        self._cpu_sigma_mat = self._sigma_mat
-        self._cpu_col_freq = self._col_freq
-        self._cpu_maxwellian_mat = self._maxwellian_mat
-        self._cpu_exp_mat = self._exp_mat
-        self._cpu_index_array = self._index_array
-
         self._input_shape = input_shape
-        self._built_cpu = True
+        self._built = True
 
     def _build_gpu(self, input_shape):
-        self._gpu_weights = cp.asarray(self._weights)
-        self._gpu_sigma_mat = cp.asarray(self._sigma_mat)
-        self._gpu_col_freq = cp.asarray(self._col_freq)
-        self._gpu_maxwellian_mat = cp.asarray(self._maxwellian_mat)
-        self._gpu_exp_mat = cp.asarray(self._exp_mat)
-        self._gpu_index_array = cp.asarray(self._index_array)
-
         self._input_shape = input_shape
-        self._built_gpu = True
+        self._built = True
 
-    def _set_to_gpu(self):
-        self.weights = self._gpu_weights
-        self.sigma_mat = self._gpu_sigma_mat
-        self.col_freq = self._gpu_col_freq
-        self.maxwellian_mat = self._gpu_maxwellian_mat
-        self.exp_mat = self._gpu_exp_mat
-        self.index_array = self._gpu_index_array
-
-    def _set_to_cpu(self):
-        self.weights = self._cpu_weights
-        self.sigma_mat = self._cpu_sigma_mat
-        self.col_freq = self._cpu_col_freq
-        self.maxwellian_mat = self._cpu_maxwellian_mat
-        self.exp_mat = self._cpu_exp_mat
-        self.index_array = self._cpu_index_array
-
-    def collide(self, input_f):
-        xp = cp.get_array_module(input_f)
+    def _collide(self, input_f: np.ndarray | jax.Array):
         f = input_f
-        # vaxis = tuple(-(i + 1) for i in range(self.num_dim))
         if self.num_dim == 1:
-            gain = self.maxwellian_mat * xp.dot(
+            gain = self.maxwellian_mat * jnp.dot(
                 f, self.exp_mat * self.sigma_mat * self.weights
             )
         else:
@@ -65,25 +46,41 @@ class LinearBotlzmannCollision(Collision):
         v = self.vm.center
         vaxis = tuple(-(i + 1) for i in range(self.num_dim))
 
-        self._weights = np.asarray(self.vm.weights)
-        self._sigma_mat = self.sigma(v, v[:, None])
-        self._col_freq = np.sum(self._sigma_mat * self._weights, axis=vaxis)
-        self._maxwellian_mat = np.exp(-(v ** 2))
-        self._exp_mat = np.exp(v ** 2)
-        self._index_array = np.arange(self.nv)
+        self.weights = jnp.asarray(self.vm.weights)
+        self.sigma_mat = jnp.asarray(self.sigma(v, v[:, None]))
+        self.col_freq = jnp.sum(self.sigma_mat * self.weights, axis=vaxis)
+        self.maxwellian_mat = jnp.exp(-(v**2))
+        self.exp_mat = jnp.exp(v**2)
+        self.index_array = jnp.arange(self.nv)
 
         print("Collision model precomputation finished!")
 
 
 class RandomBatchLinearBoltzmannCollision(LinearBotlzmannCollision):
-    def _random_batch(self, xp):
-        idx = xp.random.randint(self.nv, size=(self.nv,) * self.num_dim)
-        return idx
+    def __init__(
+        self,
+        config,
+        velocity_mesh,
+        seed=0,
+        sigma=None,
+        heat_bath=None,
+        device="cpu",
+    ):
+        super().__init__(config, velocity_mesh, sigma, heat_bath, device)
+        self.key = jax.random.PRNGKey(seed)
 
     def collide(self, input_f):
-        xp = cp.get_array_module(input_f)
+        idx = self._random_batch()
+        coll = self._collide(input_f, idx)
+        return coll
+
+    def _random_batch(self):
+        self.key, subkey = jax.random.split(self.key)
+        idx = jax.random.randint(subkey, (self.nv,), 0, self.nv)
+        return idx
+
+    def _collide(self, input_f, idx):
         f = input_f
-        idx = self._random_batch(xp)
         if self.num_dim == 1:
             f_batch = f[..., idx]
             weights_batch = self.nv * self.weights[idx]
@@ -104,10 +101,26 @@ class RandomBatchLinearBoltzmannCollision(LinearBotlzmannCollision):
         return col
 
 
-class SymmetricRBMLinearCollision(RandomBatchLinearBoltzmannCollision):
-    def _random_batch(self, xp):
-        nvrange = xp.random.permutation(self.nv)
-        idx = xp.empty(self.nv, dtype=int)
-        idx[nvrange[: self.nv // 2]] = nvrange[self.nv // 2 :]
-        idx[nvrange[self.nv // 2 :]] = nvrange[: self.nv // 2]
-        return idx
+class SymmetricRBMLinearBoltzmannCollision(
+    RandomBatchLinearBoltzmannCollision
+):
+    def collide(self, input_f):
+        nvrange = self._random_batch()
+        coll = self._collide(input_f, nvrange)
+        return coll
+
+    def _random_batch(self):
+        self.key, subkey = jax.random.split(self.key)
+        nvrange = jax.random.permutation(subkey, self.nv)
+        # idx = jnp.empty(self.nv, dtype=jnp.int32)
+        # idx = idx.at[nvrange[: self.nv // 2]].set(nvrange[self.nv // 2 :])
+        # idx = idx.at[nvrange[self.nv // 2 :]].set(nvrange[: self.nv // 2])
+        # idx[nvrange[: self.nv // 2]] = nvrange[self.nv // 2 :]
+        # idx[nvrange[self.nv // 2 :]] = nvrange[: self.nv // 2]
+        return nvrange
+
+    def _collide(self, input_f, nvrange):
+        idx = jnp.empty(self.nv, dtype=jnp.int32)
+        idx = idx.at[nvrange[: self.nv // 2]].set(nvrange[self.nv // 2 :])
+        idx = idx.at[nvrange[self.nv // 2 :]].set(nvrange[: self.nv // 2])
+        return super()._collide(input_f, idx)

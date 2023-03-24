@@ -4,8 +4,8 @@ import ml_collections
 def validate_keys(base_cfg, config, base_filename="base_config.py"):
     """Validates that the config "inherits" from a base config.
     Args:
-      base_cfg (`ConfigDict`): base config object containing the required fields
-        for each experiment config.
+      base_cfg (`ConfigDict`): base config object containing the required
+        fields for each experiment config.
       config (`ConfigDict`): experiment config to be checked against base_cfg.
       base_filename (str): file used to generate base_cfg.
     Raises:
@@ -16,7 +16,8 @@ def validate_keys(base_cfg, config, base_filename="base_config.py"):
         if key not in config:
             raise ValueError(
                 f"Key {key!r} missing from config. This config is required "
-                f"to have keys: {list(base_cfg.keys())}. See {base_filename} for details."
+                f"to have keys: {list(base_cfg.keys())}."
+                f" See {base_filename} for details."
             )
         if (
             isinstance(base_cfg[key], ml_collections.ConfigDict)
