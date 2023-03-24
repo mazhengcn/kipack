@@ -18,21 +18,21 @@
         "vscode": {
             "settings": {
                 "python.defaultInterpreterPath": "/opt/kipackenv/bin/python"
-            }
+            },
             "extensions": [
                 "ms-python.python",
                 "ms-python.pylance",
                 "ms-python.flake8",
                 "ms-python.black-formatter",
-                "ms-python.isort"
+                "ms-python.isort",
+                "bungcip.better-toml",
+                "aaron-bond.better-comments"
             ]
         }
     },
     "runArgs": [
-        "--gpus",
-        "all",
-        "--ipc",
-        "host"
+        "--gpus=all",
+        "--ipc=host"
     ],
     "mounts": [
         {
