@@ -32,7 +32,7 @@
     },
     "runArgs": [
         "--gpus=all",
-        "--ipc=host"
+        "--shm-size=1gb",
     ],
     "mounts": [
         {
