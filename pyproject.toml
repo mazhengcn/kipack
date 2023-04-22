@@ -29,6 +29,10 @@ dependencies = [
     "scipy"
 ]
 
+[project.optional-dependencies]
+dev = ["black", "flake8", "isort", "matplotlib"]
+examples = ["clawpack"]
+
 [project.urls]
 homepage = "https://github.com/mazhengcn/kipack"
 
