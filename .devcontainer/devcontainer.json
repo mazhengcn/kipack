@@ -5,8 +5,10 @@
     },
     // 👇 Features to add to the Dev Container. More info: https://containers.dev/implementors/features.
     "features": {
-        "ghcr.io/devcontainers/features/git:1": {},
-        "ghcr.io/mazhengcn/devcontainer-features/starship:1": {}
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "configureZshAsDefaultShell": true,
+            "username": "none"
+        }
     },
     // 👇 Configure tool-specific properties.
     "customizations": {
