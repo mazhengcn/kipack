@@ -346,7 +346,7 @@ class BoltzmannSolver(Solver):
                         omega_k_minus_1 - 1.0
                     ) / omega_k_minus_1  # SSP coefficient
 
-                    delta = 1.0 / omega_k_minus_1 ** 2
+                    delta = 1.0 / omega_k_minus_1**2
                     beta = (omega_k_minus_1 + 1.0) / omega_k_minus_1
                     state.q = (
                         beta * (r * state.q + self.dt * self.dq_dt)
@@ -360,10 +360,10 @@ class BoltzmannSolver(Solver):
                     ) / omega_k_minus_1  # SSP coefficient
 
                     delta0 = (
-                        4 * omega_k - omega_k_minus_1 ** 2
-                    ) / omega_k_minus_1 ** 3
-                    beta0 = omega_k / omega_k_minus_1 ** 2
-                    beta_k_minus_1 = omega_k ** 2 / omega_k_minus_1 ** 2
+                        4 * omega_k - omega_k_minus_1**2
+                    ) / omega_k_minus_1**3
+                    beta0 = omega_k / omega_k_minus_1**2
+                    beta_k_minus_1 = omega_k**2 / omega_k_minus_1**2
 
                     state.q = (
                         beta_k_minus_1
@@ -712,9 +712,7 @@ class BoltzmannSolver0D(BoltzmannSolver):
     def dq_collision(self, state):
         collisions = np.zeros(state.q.shape)
         for i in range(state.num_eqn):
-            collisions[i, :] = self.coll[i](
-                state.q[i, :], heat_bath=self.tau, device=self.device
-            )
+            collisions[i, :] = self.coll[i](state.q[i, :])
         return collisions * self.dt / self.kn
 
 
@@ -733,8 +731,7 @@ class BoltzmannSolver1D(BoltzmannSolver):
     def dq_collision(self, state):
         collisions = np.zeros(state.q.shape)
         for i in range(state.num_eqn):
-            collisions[i, :] = self.coll[i](
-                state.q[i, :], heat_bath=self.tau)
+            collisions[i, :] = self.coll[i](state.q[i, :])
 
         return collisions * self.dt / self.kn
 
@@ -899,9 +896,7 @@ class BoltzmannSolver2D(BoltzmannSolver):
     def dq_collision(self, state):
         collisions = np.zeros(state.q.shape)
         for i in range(state.num_eqn):
-            collisions[i, :] = self.coll[i](
-                state.q[i, :], heat_bath=self.tau, device=self.device
-            )
+            collisions[i, :] = self.coll[i](state.q[i, :])
 
         return collisions * self.dt / self.kn
 

@@ -1,3 +1,4 @@
+import dataclasses
 import math
 
 import jax
@@ -7,17 +8,64 @@ import pyfftw
 from absl import logging
 from scipy import special
 
-from .base import Collision
+from .base import Array, Collision
 
 
+@dataclasses.dataclass
 class FSInelasticVHSCollision(Collision):
     """Fast spectral method to compute (in)elastic collsions."""
 
-    collision_model = "vhs"
+    heat_bath: float | None = None
+    use_pyfftw: bool = False
 
-    @property
-    def e(self):
-        return self._e
+    def __post_init__(self):
+        super().__post_init__()
+        # Load model parameters
+        self.load_parameters()
+
+    def setup(self, input_shape):
+        self.precomputation()
+
+        if self.use_pyfftw:
+            self._setup_pyfftw(input_shape)
+        else:
+            self._setup_jax_fft(input_shape)
+
+        self._is_setup = True
+
+    def collide(self, input_f: Array) -> Array:
+        """Compute the collision for given density function f
+
+        Arguments:
+            input_f: density function has shape [..., vmesh]
+
+        Returns:
+            collision results
+        """
+        # fft of input
+        f_hat = self.ffts[0](input_f)
+        # Gain
+        gain_hat = self.ffts[2](
+            self.iffts[2](self.kernels["exp"] * f_hat) * input_f
+        )
+        # Multiplied by the gain kernel
+        gain_hat *= self.kernels["gain"]
+        gain_hat = gain_hat.sum(axis=(0, 1))
+        gain = self.iffts[0](gain_hat)
+        # Loss
+        loss = self.iffts[1](self.kernels["sp"] * f_hat)
+        loss *= self.kernels["loss"] * input_f
+        loss = loss.sum(axis=0)
+        # Output
+        out = (gain / (self._sphr_fac) - loss).real
+
+        if self.heat_bath:
+            out += self.heat_bath * self.laplacian(input_f)
+
+        return out
+
+    def laplacian(self, input_f: Array) -> Array:
+        return self.iffts[0](self.kernels["lapl"] * self.ffts[0](input_f)).real
 
     def load_parameters(self):
         """Load computation parameters."""
@@ -47,10 +95,7 @@ class FSInelasticVHSCollision(Collision):
             / math.gamma(0.5 * self.num_dim)
         )
 
-    def _pre_fac(self, r):
-        return self._sphr_fac * r ** (self._gamma + self.num_dim - 1)
-
-    def perform_precomputation(self):
+    def precomputation(self):
         """Perform precomputation."""
 
         # Spectral index
@@ -111,15 +156,10 @@ class FSInelasticVHSCollision(Collision):
             "sp": sp,
             "lapl": lapl,
         }
-        if self.device == "gpu":
-            # Copy arrays to GPU
-            self._kernels = jax.tree_map(jnp.asarray, self._kernels)
 
-        logging.info(
-            "Collision model precomputation on %s has finished!", self.device
-        )
+        logging.info("Collision model precomputation finishes!")
 
-    def _build_cpu(self, input_shape: list[int] | tuple[int]):
+    def _setup_pyfftw(self, input_shape: list[int] | tuple[int]):
         # Pyfftw routines
         # Pyfftw config
         pyfftw.config.NUM_THREADS = 64
@@ -140,7 +180,7 @@ class FSInelasticVHSCollision(Collision):
         )
         fftw2 = pyfftw.builders.fftn(arr2, axes=axis)
         ifftw2 = pyfftw.builders.ifftn(arr2, axes=axis)
-        # ffts dict (cpu)
+        # ffts list (cpu)
         self.ffts = [fftw0, fftw1, fftw2]
         self.iffts = [ifftw0, ifftw1, ifftw2]
 
@@ -151,10 +191,10 @@ class FSInelasticVHSCollision(Collision):
         )
         # Save shape
         self._input_shape = input_shape
-        # Set built as true
-        self._built = True
 
-    def _build_gpu(self, input_shape: list[int] | tuple[int]):
+    def _setup_jax_fft(self, input_shape: list[int] | tuple[int]):
+        # Copy arrays to jax
+        self._kernels = jax.tree_map(jnp.asarray, self._kernels)
         # Compute axis
         axis = tuple(-(i + 1) for i in range(self.num_dim))
 
@@ -177,41 +217,13 @@ class FSInelasticVHSCollision(Collision):
         )
         # Save shape
         self._input_shape = input_shape
-        # Set built as true
-        self._built = True
 
-    def collide(
-        self, input_f: np.ndarray | jax.Array
-    ) -> np.ndarray | jax.Array:
-        """Compute the collision for given density function f
+    def _pre_fac(self, r):
+        return self._sphr_fac * r ** (self._gamma + self.num_dim - 1)
 
-        Arguments:
-            input_f: density function has shape [..., vmesh]
-
-        Returns:
-            collision results
-        """
-        # fft of input
-        f_hat = self.ffts[0](input_f)
-        # Gain
-        gain_hat = self.ffts[2](
-            self.iffts[2](self.kernels["exp"] * f_hat) * input_f
-        )
-        # Multiplied by the gain kernel
-        gain_hat *= self.kernels["gain"]
-        gain_hat = gain_hat.sum(axis=(0, 1))
-        gain = self.iffts[0](gain_hat)
-        # Loss
-        loss = self.iffts[1](self.kernels["sp"] * f_hat)
-        loss *= self.kernels["loss"] * input_f
-        loss = loss.sum(axis=0)
-        # Output
-        return (gain / (self._sphr_fac) - loss).real
-
-    def laplacian(
-        self, input_f: np.ndarray | jax.Array
-    ) -> np.ndarray | jax.Array:
-        return self.iffts[0](self.kernels["lapl"] * self.ffts[0](input_f)).real
+    @property
+    def e(self):
+        return self._e
 
 
 def _broadcast_kernels(

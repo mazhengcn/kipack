@@ -1,6 +1,7 @@
 import copy
 import math
 
+import jax
 import numpy as np
 
 from kipack import collision, pykinetic
@@ -106,12 +107,10 @@ def run(
     # Collision
     vmesh = collision.CartesianMesh(cfg)
     if coll == "linear":
-        coll_op = collision.LinearBotlzmannCollision(
-            cfg, vmesh, sigma=sigma, device="gpu"
-        )
+        coll_op = collision.LinearBotlzmannCollision(cfg, vmesh, sigma=sigma)
     elif coll == "rbm":
         coll_op = collision.RandomBatchLinearBoltzmannCollision(
-            cfg, vmesh, seed=0, sigma=sigma, device="gpu"
+            cfg, vmesh, sigma=sigma, seed=0
         )
     elif coll == "rbm_symm":
         coll_op = collision.SymmetricRBMLinearBoltzmannCollision(
@@ -121,6 +120,7 @@ def run(
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)
         )
+    coll = jax.jit(lambda x: coll_op(x))
 
     # x domian
     x = pykinetic.Dimension(xmin, xmax, nx, name="x")
@@ -130,7 +130,7 @@ def run(
     rp = pykinetic.riemann.advection_1D
     solver = DiffusiveRegimeSolver1D(
         rp,
-        [coll_op],
+        [coll],
         kn=kn(x.centers),
         G=G(x.centers),
     )

@@ -1,86 +1,62 @@
-# import cupy as cp
+import dataclasses
+
 import jax
 import jax.numpy as jnp
-import numpy as np
+from absl import logging
 
-from .base import Collision
+from .base import Array, Collision
 
 
+@dataclasses.dataclass
 class LinearBotlzmannCollision(Collision):
-    def __init__(
-        self, config, velocity_mesh, sigma=None, heat_bath=None, device="cpu"
-    ):
-        self.sigma = sigma
-        super().__init__(config, velocity_mesh, heat_bath, device)
+    sigma: float | Array = 1.0
 
-        self._collide = jax.jit(self._collide)
-
-    def collide(self, input_f):
-        return self._collide(input_f)
-
-    def load_parameters(self):
-        self.nv = self.vm.nv
-
-    def _build_cpu(self, input_shape):
-        self._input_shape = input_shape
-        self._built = True
-
-    def _build_gpu(self, input_shape):
-        self._input_shape = input_shape
-        self._built = True
-
-    def _collide(self, input_f: np.ndarray | jax.Array):
-        f = input_f
-        if self.num_dim == 1:
-            gain = self.maxwellian_mat * jnp.dot(
-                f, self.exp_mat * self.sigma_mat * self.weights
-            )
-        else:
+    def __post_init__(self):
+        super().__post_init__()
+        # Load model parameters
+        if self.num_dim != 1:
             raise ValueError("Only dimension 1 is implemented.")
 
-        loss = self.col_freq * f
+        self.nv = self.vm.nv
 
-        return gain - loss
-
-    def perform_precomputation(self):
-        v = self.vm.center
+    def setup(self, input_shape):
         vaxis = tuple(-(i + 1) for i in range(self.num_dim))
+        v = self.vm.center
 
-        self.weights = jnp.asarray(self.vm.weights)
-        self.sigma_mat = jnp.asarray(self.sigma(v, v[:, None]))
+        self.weights = self.vm.weights
+        self.sigma_mat = self.sigma(v, v[:, None])
         self.col_freq = jnp.sum(self.sigma_mat * self.weights, axis=vaxis)
         self.maxwellian_mat = jnp.exp(-(v**2))
         self.exp_mat = jnp.exp(v**2)
         self.index_array = jnp.arange(self.nv)
 
-        print("Collision model precomputation finished!")
+        logging.info("Collision model precomputation finished!")
+
+    def collide(self, f: Array) -> Array:
+        gain = self.maxwellian_mat * jnp.dot(
+            f, self.exp_mat * self.sigma_mat * self.weights
+        )
+        loss = self.col_freq * f
+
+        return gain - loss
 
 
+@dataclasses.dataclass
 class RandomBatchLinearBoltzmannCollision(LinearBotlzmannCollision):
-    def __init__(
-        self,
-        config,
-        velocity_mesh,
-        seed=0,
-        sigma=None,
-        heat_bath=None,
-        device="cpu",
-    ):
-        super().__init__(config, velocity_mesh, sigma, heat_bath, device)
-        self.key = jax.random.PRNGKey(seed)
+    seed: int = 0
 
-    def collide(self, input_f):
-        idx = self._random_batch()
-        coll = self._collide(input_f, idx)
-        return coll
+    def setup(self, input_shape):
+        super().setup(input_shape)
+        self.key = jax.random.PRNGKey(self.seed)
 
     def _random_batch(self):
         self.key, subkey = jax.random.split(self.key)
         idx = jax.random.randint(subkey, (self.nv,), 0, self.nv)
         return idx
 
-    def _collide(self, input_f, idx):
-        f = input_f
+    def collide(self, f: Array) -> Array:
+        idx = self._random_batch()
+        f = jnp.asarray(f)
         if self.num_dim == 1:
             f_batch = f[..., idx]
             weights_batch = self.nv * self.weights[idx]

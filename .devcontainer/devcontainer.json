@@ -17,16 +17,13 @@
                 "python.defaultInterpreterPath": "/opt/kipackenv/bin/python"
             },
             "extensions": [
-                "aaron-bond.better-comments",
-                "bungcip.better-toml",
                 "GitHub.copilot",
                 "ms-python.black-formatter",
                 "ms-python.flake8",
                 "ms-python.isort",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "ms-toolsai.jupyter",
-                "yzhang.markdown-all-in-one"
+                "ms-toolsai.jupyter"
             ]
         }
     },
@@ -42,5 +39,5 @@
             "type": "volume"
         }
     ],
-    "postCreateCommand": "python -m pip install -e '.[dev]'"
+    "postCreateCommand": "pip install -e '.[dev]'"
 }

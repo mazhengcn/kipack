@@ -1,14 +1,30 @@
-from abc import ABCMeta, abstractmethod
+import abc
+import dataclasses
 
+import jax
 import numpy as np
+from ml_collections import ConfigDict
+
+from .vmesh.base import VMesh
+
+Array = jax.Array | np.ndarray
 
 
-class Collision(object, metaclass=ABCMeta):
-    def __init__(self, config, velocity_mesh, heat_bath=None, device="cpu"):
+@dataclasses.dataclass
+class Collision(abc.ABC):
+    config: ConfigDict
+    vm: VMesh
+    name: str = "collision"
 
-        # Load configuration
-        self.config = config
-        self.vm = velocity_mesh
+    @abc.abstractmethod
+    def setup(self, *args):
+        pass
+
+    @abc.abstractmethod
+    def collide(self, input_f):
+        pass
+
+    def __post_init__(self):
         # Load dimension
         self.num_dim = self.config.collision_model.dim
         assert (
@@ -17,44 +33,18 @@ class Collision(object, metaclass=ABCMeta):
             velocity dimensions from collision model! This may be caused by \
             using different config files. Please check the consistency."
 
-        self.heat_bath = heat_bath
-        # Device: cpu or gpu
-        self.device = device
-        # Read model parameters
-        self.load_parameters()
-        # Perform precomputation
-        self.perform_precomputation()
+        self._is_setup = False
 
-        if self.device == "cpu":
-            self.build = self._build_cpu
-        elif self.device == "gpu":
-            self.build = self._build_gpu
-        else:
-            raise ValueError("Device must be 'cpu' or 'gpu'.")
+    def __call__(self, f: Array) -> Array:
+        if not self._is_setup:
+            self.setup(f.shape)
 
-        self._built = False
-        self._input_shape = None
-
-    def __call__(self, input_f, heat_bath=0.0):
-        """Compute one step collision."""
-        if not self._built:
-            self.build(input_f.shape)
-
-        output = self.collide(input_f)
-
-        if heat_bath:
-            output += heat_bath * self.laplacian(input_f)
-
-        return output
+        return self.collide(f)
 
     # get primitive macroscopic quantities [rho, u, T]
-    def get_p(self, input_f: np.ndarray):
+    def get_p(self, input_f: Array):
         return self.vm.get_p(input_f)
 
     # get conserved macroscopic quantities [rho, m, E]
-    def get_F(self, input_f: np.ndarray):
+    def get_F(self, input_f: Array):
         return self.vm.get_F(input_f)
-
-    @abstractmethod
-    def load_parameters(self):
-        pass
