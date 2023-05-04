@@ -3,28 +3,10 @@
     "build": {
         "dockerfile": "Dockerfile"
     },
-    // 👇 Features to add to the Dev Container. More info: https://containers.dev/implementors/features.
     "features": {
         "ghcr.io/devcontainers/features/common-utils:2": {
             "configureZshAsDefaultShell": true,
             "username": "none"
-        }
-    },
-    // 👇 Configure tool-specific properties.
-    "customizations": {
-        "vscode": {
-            "settings": {
-                "python.defaultInterpreterPath": "/opt/kipackenv/bin/python"
-            },
-            "extensions": [
-                "GitHub.copilot",
-                "ms-python.black-formatter",
-                "ms-python.flake8",
-                "ms-python.isort",
-                "ms-python.python",
-                "ms-python.vscode-pylance",
-                "ms-toolsai.jupyter"
-            ]
         }
     },
     "runArgs": [
@@ -39,5 +21,21 @@
             "type": "volume"
         }
     ],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/opt/kipackenv/bin/python"
+            },
+            "extensions": [
+                "ms-python.black-formatter",
+                "ms-python.flake8",
+                "ms-python.isort",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter",
+                "GitHub.copilot"
+            ]
+        }
+    },
     "postCreateCommand": "pip install -e '.[dev]'"
 }
