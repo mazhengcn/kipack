@@ -23,7 +23,7 @@ COPY --from=pip-installs /usr/lib/x86_64-linux-gnu/libgomp.so.1 /usr/lib/x86_64-
 
 ENV PATH="/opt/kipackenv/bin:$PATH"
 
-ARG NVIDIA_LIB_DIR=${VENV_PATH}/lib/python3.11/site-packages/nvidia
+ARG NVIDIA_LIB_DIR=/opt/kipackenv/lib/python3.11/site-packages/nvidia
 ENV LD_LIBRARY_PATH=${NVIDIA_LIB_DIR}/cuda_runtime/lib
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${NVIDIA_LIB_DIR}/cuda_nvrtc/lib
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${NVIDIA_LIB_DIR}/cublas/lib
