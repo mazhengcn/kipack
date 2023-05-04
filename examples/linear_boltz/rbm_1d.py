@@ -108,19 +108,35 @@ def run(
     vmesh = collision.CartesianMesh(cfg)
     if coll == "linear":
         coll_op = collision.LinearBotlzmannCollision(cfg, vmesh, sigma=sigma)
+        coll_fn = jax.jit(lambda x: coll_op(x, None))
     elif coll == "rbm":
         coll_op = collision.RandomBatchLinearBoltzmannCollision(
-            cfg, vmesh, sigma=sigma, seed=0
+            cfg, vmesh, sigma=sigma
         )
+        jitted_coll_op = jax.jit(lambda x, rng: coll_op(x, rng))
+
+        rng = [jax.random.PRNGKey(0)]
+
+        def coll_fn(x):
+            rng[0], subkey = jax.random.split(rng[0])
+            return jitted_coll_op(x, subkey)
+
     elif coll == "rbm_symm":
         coll_op = collision.SymmetricRBMLinearBoltzmannCollision(
-            cfg, vmesh, seed=0, sigma=sigma, device="gpu"
+            cfg, vmesh, sigma=sigma
         )
+        jitted_coll_op = jax.jit(lambda x, rng: coll_op(x, rng))
+
+        rng = [jax.random.PRNGKey(0)]
+
+        def coll_fn(x):
+            rng[0], subkey = jax.random.split(rng[0])
+            return jitted_coll_op(x, subkey)
+
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)
         )
-    coll = jax.jit(lambda x: coll_op(x))
 
     # x domian
     x = pykinetic.Dimension(xmin, xmax, nx, name="x")
@@ -130,7 +146,7 @@ def run(
     rp = pykinetic.riemann.advection_1D
     solver = DiffusiveRegimeSolver1D(
         rp,
-        [coll],
+        [coll_fn],
         kn=kn(x.centers),
         G=G(x.centers),
     )

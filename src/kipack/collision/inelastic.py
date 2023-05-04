@@ -33,7 +33,7 @@ class FSInelasticVHSCollision(Collision):
 
         self._is_setup = True
 
-    def collide(self, input_f: Array) -> Array:
+    def collide(self, input_f: Array, rng: jax.Array | None = None) -> Array:
         """Compute the collision for given density function f
 
         Arguments:

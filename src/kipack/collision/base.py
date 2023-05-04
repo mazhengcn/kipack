@@ -35,11 +35,11 @@ class Collision(abc.ABC):
 
         self._is_setup = False
 
-    def __call__(self, f: Array) -> Array:
+    def __call__(self, f: Array, rng: jax.Array | None) -> Array:
         if not self._is_setup:
             self.setup(f.shape)
 
-        return self.collide(f)
+        return self.collide(f, rng)
 
     # get primitive macroscopic quantities [rho, u, T]
     def get_p(self, input_f: Array):
