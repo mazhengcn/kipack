@@ -1,4 +1,6 @@
-FROM python:3.11-slim-bullseye AS pip-installs
+FROM python:3.11-slim-bullseye AS base
+
+FROM base AS pip-installs
 RUN apt-get update && apt-get -y install libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -17,7 +19,7 @@ RUN pip install --no-cache-dir --upgrade pip wheel \
     nvidia-curand-cu12 \
     nvidia-cuda-nvrtc-cu12
 
-FROM python:3.11-slim-bullseye
+FROM base
 COPY --from=pip-installs /opt/kipackenv /opt/kipackenv
 COPY --from=pip-installs /usr/lib/x86_64-linux-gnu/libgomp.so.1 /usr/lib/x86_64-linux-gnu/libgomp.so.1
 
