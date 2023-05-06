@@ -69,14 +69,22 @@ def compute_rho(state, vmesh):
 
 
 class DiffusiveRegimeSolver1D(BoltzmannSolver1D):
-    def __init__(self, riemann_solver, collision_operator, kn, G, **kwargs):
+    def __init__(
+        self, riemann_solver, collision_operator, kn, G, seed: int = 42
+    ):
         self.G = self._convert_params(G)
+        self.rng = jax.random.PRNGKey(seed)
         super().__init__(
             riemann_solver=riemann_solver,
             collision_operator=collision_operator,
             kn=kn,
-            **kwargs,
         )
+
+    def dq_collision(self, state):
+        collisions = np.zeros(state.q.shape)
+        for i in range(state.num_eqn):
+            collisions[i, :], self.rng = self.coll[i](state.q[i, :], self.rng)
+        return collisions * self.dt / self.kn
 
     def dq(self, state):
         deltaq = self.dq_hyperbolic(state) / self.kn
@@ -108,35 +116,19 @@ def run(
     vmesh = collision.CartesianMesh(cfg)
     if coll == "linear":
         coll_op = collision.LinearBotlzmannCollision(cfg, vmesh, sigma=sigma)
-        coll_fn = jax.jit(lambda x: coll_op(x, None))
     elif coll == "rbm":
         coll_op = collision.RandomBatchLinearBoltzmannCollision(
             cfg, vmesh, sigma=sigma
         )
-        jitted_coll_op = jax.jit(lambda x, rng: coll_op(x, rng))
-
-        rng = [jax.random.PRNGKey(0)]
-
-        def coll_fn(x):
-            rng[0], subkey = jax.random.split(rng[0])
-            return jitted_coll_op(x, subkey)
-
     elif coll == "rbm_symm":
         coll_op = collision.SymmetricRBMLinearBoltzmannCollision(
             cfg, vmesh, sigma=sigma
         )
-        jitted_coll_op = jax.jit(lambda x, rng: coll_op(x, rng))
-
-        rng = [jax.random.PRNGKey(0)]
-
-        def coll_fn(x):
-            rng[0], subkey = jax.random.split(rng[0])
-            return jitted_coll_op(x, subkey)
-
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)
         )
+    coll_fn = jax.jit(lambda *args: coll_op(*args))
 
     # x domian
     x = pykinetic.Dimension(xmin, xmax, nx, name="x")
@@ -145,10 +137,7 @@ def run(
     # Riemann solver
     rp = pykinetic.riemann.advection_1D
     solver = DiffusiveRegimeSolver1D(
-        rp,
-        [coll_fn],
-        kn=kn(x.centers),
-        G=G(x.centers),
+        rp, [coll_fn], kn=kn(x.centers), G=G(x.centers)
     )
     solver.order = 1
     # solver.lim_type = 2

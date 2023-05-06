@@ -35,7 +35,7 @@ class Collision(abc.ABC):
 
         self._is_setup = False
 
-    def __call__(self, f: Array, rng: jax.Array | None) -> Array:
+    def __call__(self, f: Array, rng: Array | None = None) -> Array:
         if not self._is_setup:
             self.setup(f.shape)
 

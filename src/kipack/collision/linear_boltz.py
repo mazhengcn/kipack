@@ -32,23 +32,30 @@ class LinearBotlzmannCollision(Collision):
 
         logging.info("Collision model precomputation finished!")
 
-    def collide(self, f: Array, rng: jax.Array | None) -> Array:
+    def collide(self, f: Array, rng: Array | None = None) -> Array:
         gain = self.maxwellian_mat * jnp.dot(
             f, self.exp_mat * self.sigma_mat * self.weights
         )
         loss = self.col_freq * f
 
-        return gain - loss
+        return gain - loss, rng
 
 
 @dataclasses.dataclass
 class RandomBatchLinearBoltzmannCollision(LinearBotlzmannCollision):
-    def _random_batch(self, rng):
-        return jax.random.randint(rng, (self.nv,), 0, self.nv)
+    seed: int = 0
 
-    def collide(self, f: Array, rng: jax.Array) -> Array:
-        idx = self._random_batch(rng)
+    def __post_init__(self):
+        super().__post_init__()
+        self.rng = jax.random.PRNGKey(self.seed)
 
+    def _random_batch(self, rng: Array):
+        rng, sub_rng = jax.random.split(rng)
+        idx = jax.random.randint(sub_rng, (self.nv,), 0, self.nv)
+        return idx, rng
+
+    def collide(self, f: Array, rng: Array) -> Array:
+        idx, rng = self._random_batch(rng)
         if self.num_dim == 1:
             f_batch = f[..., idx]
             weights_batch = self.nv * self.weights[idx]
@@ -63,15 +70,16 @@ class RandomBatchLinearBoltzmannCollision(LinearBotlzmannCollision):
             * weights_batch
             - self.col_freq * f
         )
-        return col
+        return col, rng
 
 
 class SymmetricRBMLinearBoltzmannCollision(
     RandomBatchLinearBoltzmannCollision
 ):
-    def _random_batch(self, rng):
-        nvrange = jax.random.permutation(rng, self.nv)
+    def _random_batch(self, rng: Array):
+        rng, sub_rng = jax.random.split(rng)
+        nvrange = jax.random.permutation(sub_rng, self.nv)
         idx = jnp.empty(self.nv, dtype=jnp.int32)
         idx = idx.at[nvrange[: self.nv // 2]].set(nvrange[self.nv // 2 :])
         idx = idx.at[nvrange[self.nv // 2 :]].set(nvrange[: self.nv // 2])
-        return idx
+        return idx, rng
