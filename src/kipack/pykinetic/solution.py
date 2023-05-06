@@ -10,7 +10,7 @@ from kipack.pykinetic.state import State
 # ============================================================================
 #  Solution Class
 # ============================================================================
-class Solution(object):
+class Solution:
     """
     Patch container class
 

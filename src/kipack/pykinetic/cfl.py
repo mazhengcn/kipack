@@ -4,7 +4,7 @@ Courant-Friedrichs-Lewy condition.
 """
 
 
-class CFL(object):
+class CFL:
     def __init__(self, global_max):
         self._global_max = global_max
 

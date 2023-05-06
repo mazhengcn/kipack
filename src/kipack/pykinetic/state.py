@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 
 import numpy as np
+
 from kipack.pykinetic import geometry
 
 
-class State(object):
+class State:
     def __init__(self, geom, vmesh, num_eqn, num_aux=0):
-
         if isinstance(geom, geometry.Patch):
             self.patch = geom
         elif isinstance(geom, geometry.Domain):

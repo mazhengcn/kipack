@@ -24,7 +24,7 @@ identity_map = {
 }
 
 
-class Grid(object):
+class Grid:
     """
     Representation of a single grid.
 
@@ -245,7 +245,8 @@ class Grid(object):
 
     # ========== Coordinates =============================================
     def _compute_c_centers(self, recompute=False):
-        """Calculate the coordinates of the centers in the computational domain.
+        """Calculate the coordinates of the centers in the computational
+        domain.
 
         :Input:
          - *recompute* - (bool) Whether to force a recompute of the arrays
@@ -293,7 +294,8 @@ class Grid(object):
             self._p_centers = self.mapc2p(*self._c_centers)
 
     def _compute_p_nodes(self, recompute=False):
-        r"""Calculate the coordinates of the nodes (corners) in the physical domain.
+        r"""Calculate the coordinates of the nodes (corners) in the physical
+        domain.
 
         :Input:
          - *recompute* - (bool) Whether to force a recompute of the arrays
@@ -517,7 +519,7 @@ class Grid(object):
 # ============================================================================
 #  Dimension Object
 # ============================================================================
-class Dimension(object):
+class Dimension:
     r"""
     Basic class representing a dimension of a Patch object
 
@@ -712,7 +714,7 @@ class Dimension(object):
 # ============================================================================
 #  Pyclaw Patch object definition
 # ============================================================================
-class Patch(object):
+class Patch:
     """
     :Global Patch information:
         Each patch has a value for :attr:`level` and :attr:`patch_index`.
@@ -824,7 +826,7 @@ class Patch(object):
 # ============================================================================
 #  Pyclaw Domain object definition
 # ============================================================================
-class Domain(object):
+class Domain:
     r"""
     A Domain is a list of Patches.
 

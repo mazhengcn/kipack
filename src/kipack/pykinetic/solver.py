@@ -39,7 +39,7 @@ def before_step(solver, solution):
     pass
 
 
-class Solver(object):
+class Solver:
     def __init__(self, riemann_solver=None, collision_operator=None):
         """
         Initialize a Solver object

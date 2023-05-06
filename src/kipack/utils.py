@@ -5,7 +5,7 @@ import time
 import numpy as np
 
 
-class Progbar(object):
+class Progbar:
     """Displays a progress bar.
 
     Arguments:
