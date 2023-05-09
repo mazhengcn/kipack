@@ -26,11 +26,9 @@ dependencies = [
     "ml-collections",
     "numpy",
     "pyfftw",
-    "scipy"
 ]
 
 [project.optional-dependencies]
-dev = ["black", "flake8", "isort", "matplotlib"]
 examples = ["clawpack"]
 
 [project.urls]

@@ -1,18 +1,18 @@
 {
-    "name": "KiPack Dev Container",
+    "name": "Kipack",
     "build": {
         "dockerfile": "Dockerfile"
     },
     "features": {
         "ghcr.io/devcontainers/features/common-utils:2": {
-            "configureZshAsDefaultShell": true,
+            "installZsh": false,
             "username": "none"
         }
     },
     "runArgs": [
         "--name=kipack",
         "--gpus=all",
-        "--shm-size=1gb"
+        "--shm-size=1g"
     ],
     "mounts": [
         {
@@ -37,5 +37,5 @@
             ]
         }
     },
-    "postCreateCommand": "pip install -e '.[dev]'"
+    "postCreateCommand": "pip install -e ."
 }
