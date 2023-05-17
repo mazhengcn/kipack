@@ -1,12 +1,19 @@
 import math
 
-import cupy as cp
 import numpy as np
 
 from .base import Collision
 
 
+@dataclasses.dataclass
 class RandomBatchCollisionParticle(Collision):
+    def __post_init__(self):
+        super().__post_init__()
+        self.load_parameters()
+
+    def setup(self, input_shape):
+        self.precomputation()
+
     def load_parameters(self):
         self.eps = None
         # Load collision model (e and gamma)
@@ -77,12 +84,9 @@ class RandomBatchCollisionParticle(Collision):
         f_ast = f[..., idx_f_ast[0], idx_f_ast[1]]
         # f'
         vp = batch["vp"]
-        fp = self._particle_f(f * self.dv ** 2, vp, self.eps, xp)
+        fp = self._particle_f(f * self.dv**2, vp, self.eps, xp)
         # f'_*
         vp_ast = batch["vp_ast"]
-        fp_ast = self._particle_f(f * self.dv ** 2, vp_ast, self.eps, xp)
+        fp_ast = self._particle_f(f * self.dv**2, vp_ast, self.eps, xp)
 
-        return 4 * self.vm.L ** 2 * (fp_ast * fp - f_ast * f)
-
-    def perform_precomputation(self):
-        pass
+        return 4 * self.vm.L**2 * (fp_ast * fp - f_ast * f)

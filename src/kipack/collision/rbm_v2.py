@@ -1,6 +1,5 @@
 import math
 
-import cupy as cp
 import numpy as np
 
 from .base import Collision
@@ -8,8 +7,8 @@ from .base import Collision
 
 def collision_kernel(idx_k, idx_l, xp):
     k_dot_l = idx_k[0] * idx_l[0] + idx_k[1] * idx_l[1]
-    return (k_dot_l == 0) * 2 * xp.sum(idx_k ** 2, axis=0) + xp.sum(
-        idx_l ** 2, axis=0
+    return (k_dot_l == 0) * 2 * xp.sum(idx_k**2, axis=0) + xp.sum(
+        idx_l**2, axis=0
     ) / 4 * math.pi
 
 
@@ -76,7 +75,7 @@ class RandomBatchCollisionV2(Collision):
         return (
             collision_kernel(idx_k, idx_l, xp)
             * (fp_ast * fp - f_ast * f)
-            * self.dv ** 2
+            * self.dv**2
         )
 
     def perform_precomputation(self):

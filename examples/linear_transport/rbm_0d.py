@@ -1,10 +1,13 @@
 import copy
 import math
 
+import jax
 import numpy as np
 
 from kipack import collision, pykinetic
 from kipack.utils import Progbar
+
+from .configs import linear
 
 rkcoeff = {
     "RK3": {
@@ -33,7 +36,7 @@ def bkw_fn(vmesh, t):
     K = 1 - 0.5 * np.exp(-t / 8)
     return (
         1
-        / (2 * math.pi * K ** 2)
+        / (2 * math.pi * K**2)
         * np.exp(-0.5 * vsq / K)
         * (2 * K - 1 + 0.5 * vsq * (1 - K) / K)
     )
@@ -44,9 +47,9 @@ def ext_Q(vmesh, t):
 
     K = 1 - np.exp(-t / 8) / 2
     dK = np.exp(-t / 8) / 16
-    df = (-2 / K + vsq / (2 * K ** 2)) * bkw_fn(vmesh, t) + 1 / (
-        2 * math.pi * K ** 2
-    ) * np.exp(-vsq / (2 * K)) * (2 - vsq / (2 * K ** 2))
+    df = (-2 / K + vsq / (2 * K**2)) * bkw_fn(vmesh, t) + 1 / (
+        2 * math.pi * K**2
+    ) * np.exp(-vsq / (2 * K)) * (2 - vsq / (2 * K**2))
     return df * dK
 
 
@@ -56,7 +59,6 @@ def maxwellian(vmesh, K):
 
 
 def qinit(state, vmesh):
-
     state.q[:] = maxwellian(vmesh, 1.0)
 
 
@@ -69,16 +71,29 @@ def l2_err(sol, vmesh):
     return np.sqrt(np.sum((sol.q - bkw_fn(vmesh, sol.t)) ** 2)) * vmesh.delta
 
 
-def run(kn=1.0, dt=0.01, nt=1000, coll="linear", scheme="Euler"):
-    config = collision.utils.CollisionConfig.from_json(
-        "./examples/linear_transport/configs/" + "linear" + ".json"
-    )
+class RandomBoltzmannSolver0D(pykinetic.BoltzmannSolver0D):
+    def __init__(self, riemann_solver, collision_operator, seed: int = 42):
+        self.rng = jax.random.PRNGKey(seed)
+        super().__init__(
+            riemann_solver=riemann_solver,
+            collision_operator=collision_operator,
+        )
 
-    vmesh = collision.CartesianMesh(config)
+    def dq_collision(self, state):
+        collisions = np.zeros(state.q.shape)
+        for i in range(state.num_eqn):
+            collisions[i, :], self.rng = self.coll[i](state.q[i, :], self.rng)
+        return collisions * self.dt / self.kn
+
+
+def run(kn=1.0, dt=0.01, nt=1000, coll="linear", scheme="Euler"):
+    cfg = linear.get_config("1d")
+
+    vmesh = collision.CartesianMesh(cfg)
     if coll == "linear":
-        coll_op = collision.LinearCollision(config, vmesh)
+        coll_op = collision.LinearCollision(cfg, vmesh)
     elif coll == "rbm":
-        coll_op = collision.RandomBatchLinearCollision(config, vmesh)
+        coll_op = collision.RandomBatchLinearCollision(cfg, vmesh)
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)
@@ -106,7 +121,7 @@ def run(kn=1.0, dt=0.01, nt=1000, coll="linear", scheme="Euler"):
         [copy.deepcopy(sol)],
         [compute_rho(sol.state, vmesh)],
         [0.0],
-        l2_err(sol, vmesh),
+        [l2_err(sol, vmesh)],
     )
     pbar = Progbar(nt)
     for t in range(nt):
@@ -118,8 +133,14 @@ def run(kn=1.0, dt=0.01, nt=1000, coll="linear", scheme="Euler"):
         pbar.update(t + 1, finalize=False)
     pbar.update(nt, finalize=True)
 
-    output_dict["macro_frames"] = macro_frames
-    output_dict["t"] = ts
+    output_dict.update(
+        {
+            "macro_frames": macro_frames,
+            "sol_frames": sol_frames,
+            "t": ts,
+            "errors": l2_errs,
+        }
+    )
 
     return output_dict
 
@@ -127,7 +148,7 @@ def run(kn=1.0, dt=0.01, nt=1000, coll="linear", scheme="Euler"):
 def flat(vmesh, T0):
     vx, vy = vmesh.centers
     w = np.sqrt(3 * T0)
-    return 1 / 4 / w ** 2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
+    return 1 / 4 / w**2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
 
 
 def anisotropic_f(v):

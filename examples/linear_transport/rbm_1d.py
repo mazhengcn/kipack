@@ -1,11 +1,14 @@
 import copy
 import math
 
+import jax
 import numpy as np
 
 from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
 from kipack.utils import Progbar
+
+from .configs import linear
 
 rkcoeff = {
     "RK3": {
@@ -57,18 +60,23 @@ class DiffusiveRegimeSolver1D(BoltzmannSolver1D):
         sigma_s,
         sigma_a,
         Q,
-        **kwargs
+        seed: int = 42,
     ):
         self.sigma_s, self.sigma_a, self.Q = map(
             self._convert_params, [sigma_s, sigma_a, Q]
         )
-
+        self.rng = jax.random.PRNGKey(seed)
         super().__init__(
             riemann_solver=riemann_solver,
             collision_operator=collision_operator,
             kn=kn,
-            **kwargs,
         )
+
+    def dq_collision(self, state):
+        collisions = np.zeros(state.q.shape)
+        for i in range(state.num_eqn):
+            collisions[i, :], self.rng = self.coll[i](state.q[i, :], self.rng)
+        return collisions * self.dt / self.kn
 
     def dq(self, state):
         deltaq = self.dq_hyperbolic(state) / self.kn
@@ -96,18 +104,16 @@ def run(
     init_func=lambda vmesh, u, T, rho: 0.0,
 ):
     # Load config
-    config = collision.utils.CollisionConfig.from_json(
-        "./linear_transport/configs/" + "linear" + ".json"
-    )
+    cfg = linear.get_config("1d")
 
     # Collision
-    vmesh = collision.CartesianMesh(config)
+    vmesh = collision.CartesianMesh(cfg)
     if coll == "linear":
-        coll_op = collision.LinearCollision(config, vmesh)
+        coll_op = collision.LinearCollision(cfg, vmesh)
     elif coll == "rbm":
-        coll_op = collision.RandomBatchLinearCollision(config, vmesh)
+        coll_op = collision.RandomBatchLinearCollision(cfg, vmesh)
     elif coll == "rbm_symm":
-        coll_op = collision.SymmetricRBMLinearCollision(config, vmesh)
+        coll_op = collision.SymmetricRBMLinearCollision(cfg, vmesh)
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)

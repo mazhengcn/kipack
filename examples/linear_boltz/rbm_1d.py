@@ -8,7 +8,7 @@ from kipack import collision, pykinetic
 from kipack.pykinetic.boltzmann.solver import BoltzmannSolver1D
 from kipack.utils import Progbar
 
-from .configs import config
+from .configs import linear
 
 rkcoeff = {
     "RK3": {
@@ -110,7 +110,7 @@ def run(
     init_func=lambda vmesh, u, T, rho: 0.0,
 ):
     # Load config
-    cfg = config.get_config("linear")
+    cfg = linear.get_config("1d")
 
     # Collision
     vmesh = collision.CartesianMesh(cfg)
