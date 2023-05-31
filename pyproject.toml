@@ -36,12 +36,3 @@ homepage = "https://github.com/mazhengcn/kipack"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.isort]
-profile = "black"
-
-[tool.flake8]
-extend-ignore = ["E203"]
-
-[tool.black]
-line-length = 79
