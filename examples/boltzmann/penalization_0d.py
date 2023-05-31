@@ -18,7 +18,6 @@ _CONFIG = config_flags.DEFINE_config_file(
 
 class PenalizationSolver0D(pykinetic.BoltzmannSolver0D):
     def __init__(self, collision_operator, **kwargs):
-
         self.p = kwargs.get("penalty", 0.0)
 
         super().__init__(collision_operator=collision_operator, **kwargs)
@@ -102,7 +101,6 @@ def main(kn=1.0, tau=0.1, p=1.0, dt=0.01, nt=1000, scheme="Euler"):
 
 
 def qinit(state, vmesh):
-
     state.q[:] = bkw_fn(vmesh, 8.0)
 
 
@@ -112,7 +110,7 @@ def bkw_fn(vmesh, t):
     K = 1 - 0.5 * np.exp(-t / 8)
     return (
         1
-        / (2 * math.pi * K ** 2)
+        / (2 * math.pi * K**2)
         * np.exp(-0.5 * vsq / K)
         * (2 * K - 1 + 0.5 * vsq * (1 - K) / K)
     )
@@ -123,9 +121,9 @@ def ext_Q(vmesh, t):
 
     K = 1 - np.exp(-t / 8) / 2
     dK = np.exp(-t / 8) / 16
-    df = (-2 / K + vsq / (2 * K ** 2)) * bkw_fn(vmesh, t) + 1 / (
-        2 * math.pi * K ** 2
-    ) * np.exp(-vsq / (2 * K)) * (2 - vsq / (2 * K ** 2))
+    df = (-2 / K + vsq / (2 * K**2)) * bkw_fn(vmesh, t) + 1 / (
+        2 * math.pi * K**2
+    ) * np.exp(-vsq / (2 * K)) * (2 - vsq / (2 * K**2))
     return df * dK
 
 
@@ -134,15 +132,15 @@ def ext_T(t, e, kn, tau, rho0, T0):
     # assume u0 = 0
     t = t / kn
     tau = tau * kn
-    return (T0 - 8 * tau / (1 - e ** 2)) * np.exp(
-        -(1 - e ** 2) * t * rho0 / 4
-    ) + 8 * tau / (1 - e ** 2)
+    return (T0 - 8 * tau / (1 - e**2)) * np.exp(
+        -(1 - e**2) * t * rho0 / 4
+    ) + 8 * tau / (1 - e**2)
 
 
 def flat(vmesh, T0):
     vx, vy = vmesh.centers
     w = np.sqrt(3 * T0)
-    return 1 / 4 / w ** 2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
+    return 1 / 4 / w**2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
 
 
 def maxwellian(vmesh, K):
@@ -156,11 +154,7 @@ def anisotropic_f(v):
         * (
             np.exp(
                 -(16 ** (1 / 3))
-                * (
-                    (v - 2)[:, None, None] ** 2
-                    + (v - 2)[:, None] ** 2
-                    + (v - 2) ** 2
-                )
+                * ((v - 2)[:, None, None] ** 2 + (v - 2)[:, None] ** 2 + (v - 2) ** 2)
             )
             + np.exp(
                 -(v + 0.5)[:, None, None] ** 2

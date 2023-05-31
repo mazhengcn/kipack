@@ -32,7 +32,6 @@ def dq_src(solver, state, dt, tau):
 
 class Euler1D(object):
     def __init__(self, tau, solver_type="sharpclaw", kernel_language="Python"):
-
         rs = None
         if kernel_language == "Python":
             rs = riemann.euler_1D_py.euler_hllc_1D
@@ -76,7 +75,7 @@ class Euler1D(object):
         soln = self._solution
         soln.q[density, :] = rho
         soln.q[momentum, :] = rho * u
-        soln.q[energy, :] = 0.5 * rho * u ** 2 + rho * T
+        soln.q[energy, :] = 0.5 * rho * u**2 + rho * T
 
     def solve(self, tfinal):
         self._claw.tfinal = tfinal
@@ -89,5 +88,5 @@ class Euler1D(object):
         soln = self._solution
         rho = soln.q[density, :]
         u = soln.q[momentum, :] / rho
-        T = (2 * soln.q[energy, :] / rho - u ** 2) / vdim
+        T = (2 * soln.q[energy, :] / rho - u**2) / vdim
         return rho, u, T

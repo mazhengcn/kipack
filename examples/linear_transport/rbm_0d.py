@@ -158,11 +158,7 @@ def anisotropic_f(v):
         * (
             np.exp(
                 -(16 ** (1 / 3))
-                * (
-                    (v - 2)[:, None, None] ** 2
-                    + (v - 2)[:, None] ** 2
-                    + (v - 2) ** 2
-                )
+                * ((v - 2)[:, None, None] ** 2 + (v - 2)[:, None] ** 2 + (v - 2) ** 2)
             )
             + np.exp(
                 -(v + 0.5)[:, None, None] ** 2

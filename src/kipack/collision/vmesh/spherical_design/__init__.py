@@ -48,9 +48,7 @@ class BaseStoredSphericalQuadRule(BaseTabulatedSphericalQuadRule):
             cls._rpaths = rpaths = resource_listdir(__name__, cls.shape)
 
         for path in rpaths:
-            m = re.match(
-                r"([a-zA-Z0-9\-~+]+)-ss(\d+)" r"(?:-m(\d+))?\.txt$", path
-            )
+            m = re.match(r"([a-zA-Z0-9\-~+]+)-ss(\d+)" r"(?:-m(\d+))?\.txt$", path)
             if m:
                 yield (
                     path,
@@ -72,11 +70,7 @@ class BaseStoredSphericalQuadRule(BaseTabulatedSphericalQuadRule):
                 and (not qdeg or qdeg <= rqdeg)
             ):
                 # If so see if it is better than the current candidate
-                if (
-                    not best
-                    or (npts and rqdeg > best[2])
-                    or (qdeg and rnpts < best[1])
-                ):
+                if not best or (npts and rqdeg > best[2]) or (qdeg and rnpts < best[1]):
                     best = (rpath, rnpts, rqdeg)
 
         # Raise if no suitable rules were found

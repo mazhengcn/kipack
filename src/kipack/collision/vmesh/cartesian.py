@@ -48,9 +48,7 @@ class CartesianMesh(VMesh):
                 weights = weights * self._weights / (2 * self.L)
             return weights
         else:
-            return (self.delta / (2 * self.L)) ** self.num_dim * np.ones(
-                self.num_nodes
-            )
+            return (self.delta / (2 * self.L)) ** self.num_dim * np.ones(self.num_nodes)
 
     @property
     def lower(self):

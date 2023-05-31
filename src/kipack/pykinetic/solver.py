@@ -199,7 +199,7 @@ class Solver:
 
     def __str__(self):
         output = "Solver Status:\n"
-        for (k, v) in six.iteritems(self.status):
+        for k, v in six.iteritems(self.status):
             output = "\n".join((output, "%s = %s" % (k.rjust(25), v)))
         return output
 
@@ -227,14 +227,13 @@ class Solver:
         self._apply_bcs(state)
 
     def _apply_bcs(self, state):
-
         self.qbc = state.get_qbc_from_q(self.num_ghost, self.qbc)
         if state.num_aux > 0:
             self.auxbc = state.get_auxbc_from_aux(self.num_ghost, self.auxbc)
 
         grid = state.grid
 
-        for (idim, dim) in enumerate(grid.dimensions):
+        for idim, dim in enumerate(grid.dimensions):
             # Check if we are on a true boundary
             if state.grid.on_lower_boundary[idim]:
                 bcs = []
@@ -255,7 +254,7 @@ class Solver:
                         "variable": "q",
                     }
                 )
-                for (i, bc) in enumerate(bcs):
+                for i, bc in enumerate(bcs):
                     if bc["type"][idim] == BC.custom:
                         bc["custom_fun"](
                             state,
@@ -300,7 +299,7 @@ class Solver:
                         "variable": "q",
                     }
                 )
-                for (i, bc) in enumerate(bcs):
+                for i, bc in enumerate(bcs):
                     if bc["type"][idim] == BC.custom:
                         bc["custom_fun"](
                             state,
@@ -349,15 +348,11 @@ class Solver:
             for i in range(self.num_ghost):
                 array[:, i, ...] = array[:, self.num_ghost, ...]
         elif bc_type == BC.periodic:
-            array[:, : self.num_ghost] = array[
-                :, -2 * self.num_ghost : -self.num_ghost
-            ]
+            array[:, : self.num_ghost] = array[:, -2 * self.num_ghost : -self.num_ghost]
         elif bc_type == BC.wall:
             if name == "q":
                 for i in range(self.num_ghost):
-                    array[:, i, ...] = array[
-                        :, 2 * self.num_ghost - 1 - i, ...
-                    ]
+                    array[:, i, ...] = array[:, 2 * self.num_ghost - 1 - i, ...]
                     # Negate normal velocity
                     # TODO
                     # array[self.reflect_index[idim], i, ...] = -array[
@@ -367,9 +362,7 @@ class Solver:
                     # ]
             else:
                 for i in range(self.num_ghost):
-                    array[:, i, ...] = array[
-                        :, 2 * self.num_ghost - 1 - i, ...
-                    ]
+                    array[:, i, ...] = array[:, 2 * self.num_ghost - 1 - i, ...]
         else:
             if bc_type is None:
                 raise Exception(
@@ -411,9 +404,7 @@ class Solver:
         elif bc_type == BC.wall:
             if name == "q":
                 for i in range(self.num_ghost):
-                    array[:, -i - 1, ...] = array[
-                        :, -2 * self.num_ghost + i, ...
-                    ]
+                    array[:, -i - 1, ...] = array[:, -2 * self.num_ghost + i, ...]
                     #  Negate normal velocity
                     # TODO
                     # array[self.reflect_index[idim], -i - 1, ...] = -array[
@@ -421,9 +412,7 @@ class Solver:
                     # ]
             else:
                 for i in range(self.num_ghost):
-                    array[:, -i - 1, ...] = array[
-                        :, -2 * self.num_ghost + i, ...
-                    ]
+                    array[:, -i - 1, ...] = array[:, -2 * self.num_ghost + i, ...]
         else:
             if bc_type is None:
                 raise Exception(
@@ -512,9 +501,7 @@ class Solver:
                         "dt does not divide (tend-tstart) and dt " "is fixed!"
                     )
         if self.dt_variable == 1 and self.cfl_desired > self.cfl_max:
-            raise Exception(
-                "Variable time-stepping and desired CFL > maximum " "CFL"
-            )
+            raise Exception("Variable time-stepping and desired CFL > maximum " "CFL")
         if not take_one_step:
             if tend <= tstart:
                 self.logger.info(
@@ -524,7 +511,6 @@ class Solver:
 
         # Main time-stepping loop
         for n in range(self.max_steps):
-
             state = solution.state
 
             # Keep a backup in case we need to retake a time step
@@ -581,11 +567,7 @@ class Solver:
         # End of main time-stepping loop -------------------------------------
 
         if not take_one_step:
-            if (
-                self.dt_variable
-                and solution.t < tend
-                and num_steps == self.max_steps
-            ):
+            if self.dt_variable and solution.t < tend and num_steps == self.max_steps:
                 raise Exception("Maximum number of timesteps have been taken")
 
         return self.status

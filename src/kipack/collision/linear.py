@@ -40,9 +40,7 @@ class RandomBatchLinearCollision(LinearCollision):
 
     def _random_batch(self, rng: Array):
         rng, sub_rng = jax.random.split(rng)
-        idx = jax.random.randint(
-            sub_rng, (self.nv,) * self.num_dim, 0, self.nv
-        )
+        idx = jax.random.randint(sub_rng, (self.nv,) * self.num_dim, 0, self.nv)
         return idx, rng
 
     def _collide_1d(self, f: Array, rng: Array):

@@ -34,9 +34,9 @@ def weno(k, q):
         t2 = im * (dq_inone - dq)
         t3 = im * (dq - dq_ione)
 
-        tt1 = 13.0 * t1 ** 2 + 3.0 * (dq_intwo - 3.0 * dq_inone) ** 2
-        tt2 = 13.0 * t2 ** 2 + 3.0 * (dq_inone + dq) ** 2
-        tt3 = 13.0 * t3 ** 2 + 3.0 * (3.0 * dq - dq_ione) ** 2
+        tt1 = 13.0 * t1**2 + 3.0 * (dq_intwo - 3.0 * dq_inone) ** 2
+        tt2 = 13.0 * t2**2 + 3.0 * (dq_inone + dq) ** 2
+        tt3 = 13.0 * t3**2 + 3.0 * (3.0 * dq - dq_ione) ** 2
 
         tt1 = (epweno + tt1) ** 2
         tt2 = (epweno + tt2) ** 2
@@ -62,7 +62,6 @@ def weno(k, q):
 
 
 def weno5_wave(q, wave, s):
-
     import numpy as np
 
     epweno = 1.0e-36
@@ -88,23 +87,17 @@ def weno5_wave(q, wave, s):
             theta3 = wave[0, mw, LL + ione : UL + ione] * wave[0, mw, LL:UL]
             for m in range(1, num_eqn):
                 wnorm2 += wave[m, mw, LL:UL] ** 2
-                theta1 += (
-                    wave[m, mw, LL + intwo : UL + intwo] * wave[m, mw, LL:UL]
-                )
-                theta2 += (
-                    wave[m, mw, LL + inone : UL + inone] * wave[m, mw, LL:UL]
-                )
-                theta3 += (
-                    wave[m, mw, LL + ione : UL + ione] * wave[m, mw, LL:UL]
-                )
+                theta1 += wave[m, mw, LL + intwo : UL + intwo] * wave[m, mw, LL:UL]
+                theta2 += wave[m, mw, LL + inone : UL + inone] * wave[m, mw, LL:UL]
+                theta3 += wave[m, mw, LL + ione : UL + ione] * wave[m, mw, LL:UL]
 
             t1 = im * (theta1 - theta2)
             t2 = im * (theta2 - wnorm2)
             t3 = im * (wnorm2 - theta3)
 
-            tt1 = 13.0 * t1 ** 2 + 3.0 * (theta1 - 3.0 * theta2) ** 2
-            tt2 = 13.0 * t2 ** 2 + 3.0 * (theta2 + wnorm2) ** 2
-            tt3 = 13.0 * t3 ** 2 + 3.0 * (3.0 * wnorm2 - theta3) ** 2
+            tt1 = 13.0 * t1**2 + 3.0 * (theta1 - 3.0 * theta2) ** 2
+            tt2 = 13.0 * t2**2 + 3.0 * (theta2 + wnorm2) ** 2
+            tt3 = 13.0 * t3**2 + 3.0 * (3.0 * wnorm2 - theta3) ** 2
 
             tt1 = (epweno + tt1) ** 2
             tt2 = (epweno + tt2) ** 2

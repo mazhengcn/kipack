@@ -28,9 +28,7 @@ rkcoeff = {
 
 
 def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
-    config = collision.utils.CollisionConfig.from_json(
-        "./configs/" + coll + ".json"
-    )
+    config = collision.utils.CollisionConfig.from_json("./configs/" + coll + ".json")
 
     vmesh = collision.SpectralMesh(config)
     if coll == "fsm":
@@ -38,7 +36,7 @@ def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
     elif coll == "rbm":
         coll_op = collision.RandomBatchCollisionV2(config, vmesh)
         a, b = eps
-        coll_op.eps = a * vmesh.delta ** b
+        coll_op.eps = a * vmesh.delta**b
     else:
         raise NotImplementedError(
             "Collision method {} is not implemented.".format(coll)
@@ -65,9 +63,7 @@ def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
     pbar = Progbar(nt)
     for t in range(nt):
         solver.evolve_to_time(sol)
-        l2_err = (
-            np.sqrt(np.sum((sol.q - bkw_fn(vmesh, sol.t)) ** 2)) * vmesh.delta
-        )
+        l2_err = np.sqrt(np.sum((sol.q - bkw_fn(vmesh, sol.t)) ** 2)) * vmesh.delta
         sol_frames.append([copy.deepcopy(sol), l2_err])
         macro_frames.append(vmesh.get_p(sol.q))
         # sol_frames.append(copy.deepcopy(sol))
@@ -78,7 +74,6 @@ def run(kn=1.0, dt=0.01, nt=1000, eps=(1.0, 1.0), coll="fsm", scheme="Euler"):
 
 
 def qinit(state, vmesh):
-
     state.q[:] = bkw_fn(vmesh, 0)
 
 
@@ -88,7 +83,7 @@ def bkw_fn(vmesh, t):
     K = 1 - 0.5 * np.exp(-t / 8)
     return (
         1
-        / (2 * math.pi * K ** 2)
+        / (2 * math.pi * K**2)
         * np.exp(-0.5 * vsq / K)
         * (2 * K - 1 + 0.5 * vsq * (1 - K) / K)
     )
@@ -99,16 +94,16 @@ def ext_Q(vmesh, t):
 
     K = 1 - np.exp(-t / 8) / 2
     dK = np.exp(-t / 8) / 16
-    df = (-2 / K + vsq / (2 * K ** 2)) * bkw_fn(vmesh, t) + 1 / (
-        2 * math.pi * K ** 2
-    ) * np.exp(-vsq / (2 * K)) * (2 - vsq / (2 * K ** 2))
+    df = (-2 / K + vsq / (2 * K**2)) * bkw_fn(vmesh, t) + 1 / (
+        2 * math.pi * K**2
+    ) * np.exp(-vsq / (2 * K)) * (2 - vsq / (2 * K**2))
     return df * dK
 
 
 def flat(vmesh, T0):
     vx, vy = vmesh.centers
     w = np.sqrt(3 * T0)
-    return 1 / 4 / w ** 2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
+    return 1 / 4 / w**2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
 
 
 def maxwellian(vmesh, K):
@@ -122,11 +117,7 @@ def anisotropic_f(v):
         * (
             np.exp(
                 -(16 ** (1 / 3))
-                * (
-                    (v - 2)[:, None, None] ** 2
-                    + (v - 2)[:, None] ** 2
-                    + (v - 2) ** 2
-                )
+                * ((v - 2)[:, None, None] ** 2 + (v - 2)[:, None] ** 2 + (v - 2) ** 2)
             )
             + np.exp(
                 -(v + 0.5)[:, None, None] ** 2

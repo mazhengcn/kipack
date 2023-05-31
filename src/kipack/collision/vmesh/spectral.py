@@ -53,9 +53,7 @@ class SpectralMesh(VMesh):
     def _build_spherical_mesh(self):
         self._ssrule = self.config.ssrule
         self._nsphr = self.config.nsphr
-        srule = get_sphrquadrule(
-            "symmetric", rule=self._ssrule, npts=self._nsphr
-        )
+        srule = get_sphrquadrule("symmetric", rule=self._ssrule, npts=self._nsphr)
         self._spts = srule.pts
         self._wspts = 4 * math.pi / self._nsphr
 

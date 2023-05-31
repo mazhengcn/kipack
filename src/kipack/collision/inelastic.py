@@ -45,9 +45,7 @@ class FSInelasticVHSCollision(Collision):
         # fft of input
         f_hat = self.ffts[0](input_f)
         # Gain
-        gain_hat = self.ffts[2](
-            self.iffts[2](self.kernels["exp"] * f_hat) * input_f
-        )
+        gain_hat = self.ffts[2](self.iffts[2](self.kernels["exp"] * f_hat) * input_f)
         # Multiplied by the gain kernel
         gain_hat *= self.kernels["gain"]
         gain_hat = gain_hat.sum(axis=(0, 1))
@@ -90,9 +88,7 @@ class FSInelasticVHSCollision(Collision):
 
         # Sphere area constant
         self._sphr_fac = (
-            2
-            * math.pi ** (0.5 * self.num_dim)
-            / math.gamma(0.5 * self.num_dim)
+            2 * math.pi ** (0.5 * self.num_dim) / math.gamma(0.5 * self.num_dim)
         )
 
     def precomputation(self):
@@ -175,9 +171,7 @@ class FSInelasticVHSCollision(Collision):
         fftw1 = pyfftw.builders.fftn(arr1, axes=axis)
         ifftw1 = pyfftw.builders.ifftn(arr1, axes=axis)
         # fft2
-        arr2 = pyfftw.empty_aligned(
-            (self.vm.nr, self.vm.ncirc_or_nsphr) + input_shape
-        )
+        arr2 = pyfftw.empty_aligned((self.vm.nr, self.vm.ncirc_or_nsphr) + input_shape)
         fftw2 = pyfftw.builders.fftn(arr2, axes=axis)
         ifftw2 = pyfftw.builders.ifftn(arr2, axes=axis)
         # ffts list (cpu)
@@ -186,9 +180,7 @@ class FSInelasticVHSCollision(Collision):
 
         # Broadcast kernels
         num_extr_dim = len(input_shape) - self.num_dim
-        self.kernels = _broadcast_kernels(
-            self._kernels, self.num_dim, num_extr_dim
-        )
+        self.kernels = _broadcast_kernels(self._kernels, self.num_dim, num_extr_dim)
         # Save shape
         self._input_shape = input_shape
 
@@ -212,9 +204,7 @@ class FSInelasticVHSCollision(Collision):
 
         # Broadcast kernels
         num_extr_dim = len(input_shape) - self.num_dim
-        self.kernels = _broadcast_kernels(
-            self._kernels, self.num_dim, num_extr_dim
-        )
+        self.kernels = _broadcast_kernels(self._kernels, self.num_dim, num_extr_dim)
         # Save shape
         self._input_shape = input_shape
 
@@ -233,9 +223,7 @@ def _broadcast_kernels(
 
     # Expand gain kernels
     expand_loss_slice = (slice(None),) + (None,) * num_extr_dim
-    kernels["loss"] = kernels["loss"].squeeze()[
-        expand_loss_slice + (None,) * dim
-    ]
+    kernels["loss"] = kernels["loss"].squeeze()[expand_loss_slice + (None,) * dim]
     kernels["sp"] = kernels["sp"].squeeze()[expand_loss_slice]
     # Expand loss kernels
     expand_gain_slice = (slice(None),) + expand_loss_slice

@@ -33,11 +33,7 @@ rkcoeff = {
 
 def maxwellian_vec_init(vmesh, u, T, rho):
     v = vmesh.center
-    return (
-        rho[:, None]
-        / np.sqrt(2 * math.pi * T)
-        * np.exp(-((v - u) ** 2) / (2 * T))
-    )
+    return rho[:, None] / np.sqrt(2 * math.pi * T) * np.exp(-((v - u) ** 2) / (2 * T))
 
 
 def qinit(state, vmesh, init_func):

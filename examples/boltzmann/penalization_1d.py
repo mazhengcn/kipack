@@ -22,12 +22,11 @@ def maxwellian(v, rho, u, T):
         rho, u, T = rho[q_dim], u[q_dim], T[q_dim]
         v_u = np.sum((v - u) ** 2, axis=0)
 
-    return rho / (2 * math.pi * T) ** (vdim / 2) * np.exp(-(v_u ** 2) / 2 / T)
+    return rho / (2 * math.pi * T) ** (vdim / 2) * np.exp(-(v_u**2) / 2 / T)
 
 
 class PenalizationSolver1D(pykinetic.BoltzmannSolver1D):
     def __init__(self, riemann_solver=None, collision_operator=None, **kwargs):
-
         self.p = kwargs.get("penalty", 0.0)
 
         super().__init__(riemann_solver, collision_operator, **kwargs)
@@ -39,7 +38,7 @@ class PenalizationSolver1D(pykinetic.BoltzmannSolver1D):
 
         """
         macros = self.coll.get_p(state.q)
-        p = (1 - self.coll.e ** 2) / 4 * (macros[0] ** 1)[:, None, None]
+        p = (1 - self.coll.e**2) / 4 * (macros[0] ** 1)[:, None, None]
         pdt_kn = self.dt / (self.kn + p * self.dt)
 
         dqdt = self.dq_collision(state) * pdt_kn
@@ -186,7 +185,7 @@ def maxwellian_vec_init(vmesh, u, T, rho):
     return (
         rho[:, None, None]
         / (2 * math.pi * T)
-        * np.exp(-((v - u)[:, None] ** 2 + v ** 2) / (2 * T))
+        * np.exp(-((v - u)[:, None] ** 2 + v**2) / (2 * T))
     )
 
 
@@ -196,7 +195,7 @@ def bkw_fn(vmesh, t):
     K = 1 - 0.5 * np.exp(-t / 8)
     return (
         1
-        / (2 * math.pi * K ** 2)
+        / (2 * math.pi * K**2)
         * np.exp(-0.5 * vsq / K)
         * (2 * K - 1 + 0.5 * vsq * (1 - K) / K)
     )
@@ -207,24 +206,24 @@ def ext_Q(vmesh, t):
 
     K = 1 - np.exp(-t / 8) / 2
     dK = np.exp(-t / 8) / 16
-    df = (-2 / K + vsq / (2 * K ** 2)) * bkw_fn(vmesh, t) + 1 / (
-        2 * math.pi * K ** 2
-    ) * np.exp(-vsq / (2 * K)) * (2 - vsq / (2 * K ** 2))
+    df = (-2 / K + vsq / (2 * K**2)) * bkw_fn(vmesh, t) + 1 / (
+        2 * math.pi * K**2
+    ) * np.exp(-vsq / (2 * K)) * (2 - vsq / (2 * K**2))
     return df * dK
 
 
 def ext_T(rho0, T0, e, tau, t):
     # exact evolution of temperature
     # assume u0 = 0
-    return (T0 - 8 * tau / (1 - e ** 2)) * np.exp(
-        -(1 - e ** 2) * t * rho0 / 4
-    ) + 8 * tau / (1 - e ** 2)
+    return (T0 - 8 * tau / (1 - e**2)) * np.exp(
+        -(1 - e**2) * t * rho0 / 4
+    ) + 8 * tau / (1 - e**2)
 
 
 def flat(vmesh, T0):
     vx, vy = vmesh.centers
     w = np.sqrt(3 * T0)
-    return 1 / 4 / w ** 2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
+    return 1 / 4 / w**2 * (vx <= w) * (vx >= -w) * (vy <= w) * (vy >= -w)
 
 
 def maxwellian_init(vmesh, K):
@@ -238,11 +237,7 @@ def anisotropic_f(v):
         * (
             np.exp(
                 -(16 ** (1 / 3))
-                * (
-                    (v - 2)[:, None, None] ** 2
-                    + (v - 2)[:, None] ** 2
-                    + (v - 2) ** 2
-                )
+                * ((v - 2)[:, None, None] ** 2 + (v - 2)[:, None] ** 2 + (v - 2) ** 2)
             )
             + np.exp(
                 -(v + 0.5)[:, None, None] ** 2

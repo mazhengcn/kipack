@@ -63,19 +63,13 @@ class RandomBatchLinearBoltzmannCollision(LinearBotlzmannCollision):
             exp_batch = self.exp_mat[idx]
 
         col = (
-            self.maxwellian_mat
-            * exp_batch
-            * sigma_batch
-            * f_batch
-            * weights_batch
+            self.maxwellian_mat * exp_batch * sigma_batch * f_batch * weights_batch
             - self.col_freq * f
         )
         return col, rng
 
 
-class SymmetricRBMLinearBoltzmannCollision(
-    RandomBatchLinearBoltzmannCollision
-):
+class SymmetricRBMLinearBoltzmannCollision(RandomBatchLinearBoltzmannCollision):
     def _random_batch(self, rng: Array):
         rng, sub_rng = jax.random.split(rng)
         nvrange = jax.random.permutation(sub_rng, self.nv)

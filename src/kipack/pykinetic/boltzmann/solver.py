@@ -217,9 +217,7 @@ class BoltzmannSolver(Solver):
                         3 <= self.lmm_steps
                     ), "Must set solver.lmm_steps greater than 2 \
                         for 2nd order SSPLMM integrator."
-                    self.sspcoeff = (self.lmm_steps - 2.0) / (
-                        self.lmm_steps - 1.0
-                    )
+                    self.sspcoeff = (self.lmm_steps - 2.0) / (self.lmm_steps - 1.0)
                     # The choice of cfl_desired and cfl_max is intended for
                     # LMM with many steps (up to 20).
                     # If more steps are chosen the solution may not be
@@ -234,17 +232,13 @@ class BoltzmannSolver(Solver):
                         4 <= self.lmm_steps <= 5
                     ), "Must set solver.lmm_steps equal to 4 or 5 for 3rd \
                         order SSPLMM integrator."
-                    self.sspcoeff = (self.lmm_steps - 3.0) / (
-                        self.lmm_steps - 1.0
-                    )
+                    self.sspcoeff = (self.lmm_steps - 3.0) / (self.lmm_steps - 1.0)
                     if self.cfl_max is None:
                         self.cfl_desired = 0.48 * self.sspcoeff
                         self.cfl_max = 0.5 * self.sspcoeff
             else:
                 if self.cfl_max is None:
-                    self.cfl_desired = self._cfl_default[self.time_integrator][
-                        0
-                    ]
+                    self.cfl_desired = self._cfl_default[self.time_integrator][0]
                     self.cfl_max = self._cfl_default[self.time_integrator][1]
             if self.cfl_desired is None:
                 self.cfl_desired = 0.9 * self.cfl_max
@@ -342,9 +336,7 @@ class BoltzmannSolver(Solver):
             else:
                 if self.time_integrator == "SSPLMMk2":
                     omega_k_minus_1 = sum(self.prev_dt_values[1:]) / self.dt
-                    r = (
-                        omega_k_minus_1 - 1.0
-                    ) / omega_k_minus_1  # SSP coefficient
+                    r = (omega_k_minus_1 - 1.0) / omega_k_minus_1  # SSP coefficient
 
                     delta = 1.0 / omega_k_minus_1**2
                     beta = (omega_k_minus_1 + 1.0) / omega_k_minus_1
@@ -355,13 +347,9 @@ class BoltzmannSolver(Solver):
                 else:
                     omega_k_minus_1 = sum(self.prev_dt_values[1:]) / self.dt
                     omega_k = omega_k_minus_1 + 1.0
-                    r = (
-                        omega_k_minus_1 - 2.0
-                    ) / omega_k_minus_1  # SSP coefficient
+                    r = (omega_k_minus_1 - 2.0) / omega_k_minus_1  # SSP coefficient
 
-                    delta0 = (
-                        4 * omega_k - omega_k_minus_1**2
-                    ) / omega_k_minus_1**3
+                    delta0 = (4 * omega_k - omega_k_minus_1**2) / omega_k_minus_1**3
                     beta0 = omega_k / omega_k_minus_1**2
                     beta_k_minus_1 = omega_k**2 / omega_k_minus_1**2
 
@@ -398,9 +386,7 @@ class BoltzmannSolver(Solver):
 
         if self.call_before_step_each_stage:
             self.before_step(self, self._registers[0])
-        state.q = 0.5 * (
-            state.q + self._registers[0].q + self.dq(self._registers[0])
-        )
+        state.q = 0.5 * (state.q + self._registers[0].q + self.dq(self._registers[0]))
 
     def ssp104(self, state):
         s1 = None
@@ -462,9 +448,7 @@ class BoltzmannSolver(Solver):
                 dtFE = self.dt / cfl * self.cfl_max / self.sspcoeff
 
                 if self.time_integrator == "SSPLMMk3" and self.check_lmm_cond:
-                    self.lmm_cond = self.check_3rd_ord_cond(
-                        state, step_index, dtFE
-                    )
+                    self.lmm_cond = self.check_3rd_ord_cond(state, step_index, dtFE)
                     if not self.lmm_cond:
                         self.accept_step = False
                         state.q[:] = self._registers[-1].q
@@ -481,8 +465,7 @@ class BoltzmannSolver(Solver):
                 else:
                     if self.time_integrator == "SSPLMMk3":
                         self.prev_dq_dt_values = (
-                            self.prev_dq_dt_values[1:]
-                            + self.prev_dq_dt_values[:1]
+                            self.prev_dq_dt_values[1:] + self.prev_dq_dt_values[:1]
                         )
                         self.prev_dq_dt_values[-1] = self.dq_dt
 
@@ -611,9 +594,7 @@ class BoltzmannSolver(Solver):
         elif self.time_integrator == "LMM":
             nregisters = len(self.alpha)
         else:
-            raise Exception(
-                "Unrecognized time integrator: " + self.time_integrator
-            )
+            raise Exception("Unrecognized time integrator: " + self.time_integrator)
 
         state = solution.states[0]
         # Use the same class constructor as the solution for the Runge Kutta
@@ -687,9 +668,7 @@ class BoltzmannSolver(Solver):
                     mu = min([self.prev_dtFE_values[i] for i in range(s)])
                     H = sum(self.prev_dt_values[1:])
                     self.dt = H * mu / (H + (p - 1) * mu)
-                elif (
-                    self.time_integrator == "SSPLMMk3" and self.check_lmm_cond
-                ):
+                elif self.time_integrator == "SSPLMMk3" and self.check_lmm_cond:
                     self.dt = 0.5 * self.dt
 
         # Step-size update for RK methods
@@ -705,9 +684,7 @@ class BoltzmannSolver0D(BoltzmannSolver):
 
         self.num_dim = 0
 
-        super().__init__(
-            riemann_solver=None, collision_operator=collision_operator
-        )
+        super().__init__(riemann_solver=None, collision_operator=collision_operator)
 
     def dq_collision(self, state):
         collisions = np.zeros(state.q.shape)
@@ -717,9 +694,7 @@ class BoltzmannSolver0D(BoltzmannSolver):
 
 
 class BoltzmannSolver1D(BoltzmannSolver):
-    def __init__(
-        self, riemann_solver=None, collision_operator=None, kn=1.0, **kwargs
-    ):
+    def __init__(self, riemann_solver=None, collision_operator=None, kn=1.0, **kwargs):
         self.tau = kwargs.get("heat_bath", 0.0)
         # self.device = kwargs.get("device", "gpu")
         self.kn = self._convert_params(kn)
@@ -772,9 +747,7 @@ class BoltzmannSolver1D(BoltzmannSolver):
         grid = state.grid
         mx = grid.num_cells[0]
 
-        dtdx = np.zeros(
-            (mx + 2 * self.num_ghost,) + (1,) * len(state.num_vnodes)
-        )
+        dtdx = np.zeros((mx + 2 * self.num_ghost,) + (1,) * len(state.num_vnodes))
         dq = np.zeros(q.shape)
 
         # Find local value for dt/dx
@@ -793,9 +766,7 @@ class BoltzmannSolver1D(BoltzmannSolver):
             ql = q
             qr = q
         elif self.lim_type == 0:  # Unlimited reconstruction
-            raise NotImplementedError(
-                "Unlimited reconstruction not implemented"
-            )
+            raise NotImplementedError("Unlimited reconstruction not implemented")
         elif self.lim_type == 1:  # TVD Reconstruction
             raise NotImplementedError("TVD reconstruction not implemented")
         elif self.lim_type == 2:  # WENO Reconstruction
@@ -814,9 +785,7 @@ class BoltzmannSolver1D(BoltzmannSolver):
         # Solve Riemann problem at each interface
         q_l = qr[:, :-1]
         q_r = ql[:, 1:]
-        wave, s, amdq, apdq = self.rp(
-            q_l, q_r, aux_l, aux_r, state.problem_data
-        )
+        wave, s, amdq, apdq = self.rp(q_l, q_r, aux_l, aux_r, state.problem_data)
 
         # Loop limits for local portion of grid
         # THIS WON'T WORK IN PARALLEL!
@@ -825,9 +794,7 @@ class BoltzmannSolver1D(BoltzmannSolver):
 
         # Compute dq for Godunov update
         for m in range(state.num_eqn):
-            dq[m, LL:UL] = -dtdx[LL:UL] * (
-                amdq[m, LL:UL] + apdq[m, LL - 1 : UL - 1]
-            )
+            dq[m, LL:UL] = -dtdx[LL:UL] * (amdq[m, LL:UL] + apdq[m, LL - 1 : UL - 1])
 
         # Compute maximum wave speed
         cfl = 0.0
@@ -849,17 +816,13 @@ class BoltzmannSolver1D(BoltzmannSolver):
                     om = 1.0 - sabs * dtdxave[: UL - LL]  # (mx, num_vnodes)
                     ssign = np.sign(s[mw, :])
                     for m in range(state.num_eqn):
-                        f[m, LL:UL] += (
-                            0.5 * ssign * om * wave[m, mw, LL - 1 : UL - 1]
-                        )
+                        f[m, LL:UL] += 0.5 * ssign * om * wave[m, mw, LL - 1 : UL - 1]
             else:
                 for mw in range(wave.shape[1]):
                     sabs = np.abs(s[mw, :])
                     om = 1.0 - sabs * dtdxave[: UL - LL]
                     for m in range(state.num_eqn):
-                        f[m, LL:UL] += (
-                            0.5 * sabs * om * wave[m, mw, LL - 1 : UL - 1]
-                        )
+                        f[m, LL:UL] += 0.5 * sabs * om * wave[m, mw, LL - 1 : UL - 1]
 
             for m in range(state.num_eqn):
                 dq[m, LL : UL - 1] -= dtdx[LL : UL - 1] * (
@@ -883,9 +846,7 @@ class BoltzmannSolver1D(BoltzmannSolver):
 
 
 class BoltzmannSolver2D(BoltzmannSolver):
-    def __init__(
-        self, riemann_solver=None, collision_operator=None, kn=1.0, **kwargs
-    ):
+    def __init__(self, riemann_solver=None, collision_operator=None, kn=1.0, **kwargs):
         self.tau = kwargs.get("heat_bath", None)
         self.device = kwargs.get("device", "gpu")
         self.kn = self._convert_params(kn)
@@ -908,9 +869,7 @@ class BoltzmannSolver2D(BoltzmannSolver):
         grid = state.grid
         mx = grid.num_cells[0]
 
-        dtdx = np.zeros(
-            (mx + 2 * self.num_ghost, 1) + (1,) * len(state.num_vnodes)
-        )
+        dtdx = np.zeros((mx + 2 * self.num_ghost, 1) + (1,) * len(state.num_vnodes))
         dq = np.zeros(q.shape)
 
         # Find local value for dt/dx
@@ -929,9 +888,7 @@ class BoltzmannSolver2D(BoltzmannSolver):
             ql = q
             qr = q
         elif self.lim_type == 0:  # Unlimited reconstruction
-            raise NotImplementedError(
-                "Unlimited reconstruction not implemented"
-            )
+            raise NotImplementedError("Unlimited reconstruction not implemented")
         elif self.lim_type == 1:  # TVD Reconstruction
             raise NotImplementedError("TVD reconstruction not implemented")
         elif self.lim_type == 2:  # WENO Reconstruction
@@ -950,9 +907,7 @@ class BoltzmannSolver2D(BoltzmannSolver):
         # Solve Riemann problem at each interface
         q_l = qr[:, :-1]
         q_r = ql[:, 1:]
-        wave, s, amdq, apdq = self.rp(
-            q_l, q_r, aux_l, aux_r, state.problem_data, idim
-        )
+        wave, s, amdq, apdq = self.rp(q_l, q_r, aux_l, aux_r, state.problem_data, idim)
 
         # Loop limits for local portion of grid
         # THIS WON'T WORK IN PARALLEL!
@@ -961,9 +916,7 @@ class BoltzmannSolver2D(BoltzmannSolver):
 
         # Compute dq for Godunov update
         for m in range(state.num_eqn):
-            dq[m, LL:UL] = -dtdx[LL:UL] * (
-                amdq[m, LL:UL] + apdq[m, LL - 1 : UL - 1]
-            )
+            dq[m, LL:UL] = -dtdx[LL:UL] * (amdq[m, LL:UL] + apdq[m, LL - 1 : UL - 1])
 
         # Compute maximum wave speed
         cfl = 0.0
@@ -985,17 +938,13 @@ class BoltzmannSolver2D(BoltzmannSolver):
                     om = 1.0 - sabs * dtdxave[: UL - LL]  # (mx, num_vnodes)
                     ssign = np.sign(s[mw, :])
                     for m in range(state.num_eqn):
-                        f[m, LL:UL] += (
-                            0.5 * ssign * om * wave[m, mw, LL - 1 : UL - 1]
-                        )
+                        f[m, LL:UL] += 0.5 * ssign * om * wave[m, mw, LL - 1 : UL - 1]
             else:
                 for mw in range(wave.shape[1]):
                     sabs = np.abs(s[mw, :])
                     om = 1.0 - sabs * dtdxave[: UL - LL]
                     for m in range(state.num_eqn):
-                        f[m, LL:UL] += (
-                            0.5 * sabs * om * wave[m, mw, LL - 1 : UL - 1]
-                        )
+                        f[m, LL:UL] += 0.5 * sabs * om * wave[m, mw, LL - 1 : UL - 1]
 
             for m in range(state.num_eqn):
                 dq[m, LL : UL - 1] -= dtdx[LL : UL - 1] * (
@@ -1003,9 +952,7 @@ class BoltzmannSolver2D(BoltzmannSolver):
                 )
 
         # Find total fluctuation within each cell
-        wave, s, amdq2, apdq2 = self.rp(
-            ql, qr, aux, aux, state.problem_data, idim
-        )
+        wave, s, amdq2, apdq2 = self.rp(ql, qr, aux, aux, state.problem_data, idim)
         # Update dq
         for m in range(state.num_eqn):
             dq[m, LL:UL] -= dtdx[LL:UL] * (apdq2[m, LL:UL] + amdq2[m, LL:UL])

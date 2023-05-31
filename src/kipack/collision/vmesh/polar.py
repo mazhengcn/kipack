@@ -18,9 +18,7 @@ class PolarMesh(VMesh):
             logging.info(f"Velocity domain: disk with raidus {self._radius}.")
             self._build_polar_mesh()
         else:
-            raise ValueError(
-                "Only polar coordinate systme is implemented currently."
-            )
+            raise ValueError("Only polar coordinate systme is implemented currently.")
 
     def _build_polar_mesh(self):
         self._wphi = (self._upper - self._lower) / self._nv

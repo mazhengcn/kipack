@@ -12,9 +12,7 @@ class State:
         elif isinstance(geom, geometry.Domain):
             self.patch = geom.patches[0]
         else:
-            raise Exception(
-                "A State object must be initialized with a Patch object."
-            )
+            raise Exception("A State object must be initialized with a Patch object.")
         # Velocity descritization
         self.vmesh = vmesh
         # ========== Attribute Definitions ===================================
@@ -276,9 +274,7 @@ class State:
         ):
             return self._get_grid_attribute(key)
         else:
-            raise AttributeError(
-                "'State' object has no attribute '" + key + "'"
-            )
+            raise AttributeError("'State' object has no attribute '" + key + "'")
 
     def __str__(self):
         output = "PyKinetic State object\n"
@@ -286,9 +282,7 @@ class State:
         output += "Time  t=%s\n" % (self.t)
         output += "Number of conserved quantities: %s\n" % str(self.q.shape[0])
         if self.aux is not None:
-            output += "Number of auxiliary fields: %s\n" % str(
-                self.aux.shape[0]
-            )
+            output += "Number of auxiliary fields: %s\n" % str(self.aux.shape[0])
         if self.problem_data != {}:
             output += "problem_data: " + self.problem_data.__str__()
         return output

@@ -24,9 +24,7 @@ class VMesh(object, metaclass=ABCMeta):
     def centers(self) -> list[np.ndarray]:
         if self._centers is None:
             index = np.indices(self.num_nodes)
-            self._centers = [
-                self.center[index[i, ...]] for i in range(self.num_dim)
-            ]
+            self._centers = [self.center[index[i, ...]] for i in range(self.num_dim)]
         return self._centers
 
     @property
@@ -41,7 +39,7 @@ class VMesh(object, metaclass=ABCMeta):
     def vsquare(self) -> np.ndarray:
         vsq = 0.0
         for v in self.centers:
-            vsq += v ** 2
+            vsq += v**2
         return vsq
 
     def get_F(self, f):
@@ -57,7 +55,7 @@ class VMesh(object, metaclass=ABCMeta):
         u = [m_i / rho for m_i in m]
         usq = 0.0
         for ui in u:
-            usq += ui ** 2
+            usq += ui**2
         T = (2 * E / rho - usq) / self.num_dim
 
         return [rho, u, T]

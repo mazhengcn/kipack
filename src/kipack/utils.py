@@ -168,9 +168,7 @@ class Progbar:
             for k in self._values_order:
                 info += " - %s:" % k
                 if isinstance(self._values[k], list):
-                    avg = np.mean(
-                        self._values[k][0] / max(1, self._values[k][1])
-                    )
+                    avg = np.mean(self._values[k][0] / max(1, self._values[k][1]))
                     if abs(avg) > 1e-3:
                         info += " %.4f" % avg
                     else:
@@ -198,9 +196,7 @@ class Progbar:
                 info = count + info
                 for k in self._values_order:
                     info += " - %s:" % k
-                    avg = np.mean(
-                        self._values[k][0] / max(1, self._values[k][1])
-                    )
+                    avg = np.mean(self._values[k][0] / max(1, self._values[k][1]))
                     if avg > 1e-3:
                         info += " %.4f" % avg
                     else:

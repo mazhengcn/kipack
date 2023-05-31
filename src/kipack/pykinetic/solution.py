@@ -71,9 +71,7 @@ class Solution:
             # Load frame
             frame = arg[0]
             if not isinstance(frame, int):
-                raise Exception(
-                    "Invalid pykinetic.Solution object initialization"
-                )
+                raise Exception("Invalid pykinetic.Solution object initialization")
             if "count_from_zero" in kargs:
                 if kargs["count_from_zero"] is True:
                     self._start_frame = 0
@@ -94,9 +92,7 @@ class Solution:
                 elif isinstance(arg[1][0], Patch):
                     self.domain = Domain(arg[1])
                 else:
-                    raise Exception(
-                        "Invalid arguments for Solution initialization."
-                    )
+                    raise Exception("Invalid arguments for Solution initialization.")
 
             # Set state
             if isinstance(arg[0], State):
@@ -107,19 +103,13 @@ class Solution:
                     # List of States
                     self.states = arg[0]
                 elif isinstance(arg[0][0], int):
-                    self.states = State(
-                        self.domain, arg[0][2], arg[0][0], arg[0][1]
-                    )
+                    self.states = State(self.domain, arg[0][2], arg[0][0], arg[0][1])
                 else:
-                    raise Exception(
-                        "Invalid arguments for Solution initialization."
-                    )
+                    raise Exception("Invalid arguments for Solution initialization.")
             elif isinstance(arg[0], int):
                 self.states.append(State(self.domain, arg[1], arg[0]))
             if self.states == [] or self.domain is None:
-                raise Exception(
-                    "Invalid arguments for Solution initialization."
-                )
+                raise Exception("Invalid arguments for Solution initialization.")
         elif len(arg) == 0:
             if "frame" in kargs:
                 frame = kargs.pop("frame")
@@ -127,9 +117,7 @@ class Solution:
             elif not kargs:
                 pass  # With no arguments, initialize empty solution
             else:
-                raise Exception(
-                    "Invalid arguments for Solution initialization."
-                )
+                raise Exception("Invalid arguments for Solution initialization.")
         else:
             raise Exception("Invalid arguments for Solution initialization.")
 
@@ -179,9 +167,7 @@ class Solution:
         ):
             return self._get_base_state_attribute(key)
         else:
-            raise AttributeError(
-                "'Solution' object has no attribute '" + key + "'"
-            )
+            raise AttributeError("'Solution' object has no attribute '" + key + "'")
 
     def __setattr__(self, key, value):
         if key in ("t", "mp", "mF"):

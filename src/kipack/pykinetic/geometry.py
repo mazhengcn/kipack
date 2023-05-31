@@ -182,9 +182,7 @@ class Grid:
         ]:
             return self.get_dim_attribute(key)
         else:
-            raise AttributeError(
-                "'Grid' object has no attribute '" + key + "'"
-            )
+            raise AttributeError("'Grid' object has no attribute '" + key + "'")
 
     def __copy__(self):
         return self.__class__(self)
@@ -192,25 +190,18 @@ class Grid:
     def __str__(self):
         output = "%s-dimensional domain " % str(self.num_dim)
         output += "(" + ",".join([dim.name for dim in self.dimensions]) + ")\n"
-        if (self.mapc2p is None) or (
-            self.mapc2p in list(identity_map.values())
-        ):
+        if (self.mapc2p is None) or (self.mapc2p in list(identity_map.values())):
             output += "No mapping\n"
             output += "Extent:  "
         else:
             output += "Mapping function: " + self.mapc2p.__name__ + "\n"
             output += "Computational domain: "
         output += " x ".join(
-            [
-                "[{:.2}, {:.2}]".format(dim.lower, dim.upper)
-                for dim in self.dimensions
-            ]
+            ["[{:.2}, {:.2}]".format(dim.lower, dim.upper) for dim in self.dimensions]
         )
         output += "\n"
         output += "Cells:  "
-        output += " x ".join(
-            ["{}".format(dim.num_cells) for dim in self.dimensions]
-        )
+        output += " x ".join(["{}".format(dim.num_cells) for dim in self.dimensions])
         return output
 
     # ========== Dimension Manipulation ======================================
@@ -258,9 +249,7 @@ class Grid:
         ):
             index = np.indices(self.num_cells)
             self._c_centers = []
-            for i, center_array in enumerate(
-                self.get_dim_attribute("centers")
-            ):
+            for i, center_array in enumerate(self.get_dim_attribute("centers")):
                 self._c_centers.append(center_array[index[i, ...]])
 
     def _compute_c_nodes(self, recompute=False):
@@ -312,9 +301,7 @@ class Grid:
         r"""Compute center of computational cell with index ind."""
 
         index = [np.array(i) for i in ind]
-        return np.array(
-            [self.c_centers[i][index] for i in range(self.num_dim)]
-        )
+        return np.array([self.c_centers[i][index] for i in range(self.num_dim)])
 
     def p_center(self, ind):
         r"""Compute center of physical cell with index ind."""
@@ -420,8 +407,7 @@ class Grid:
         for gauge in gauge_coords:
             # Check if gauge belongs to this grid:
             if all(
-                self.lower[n] <= gauge[n] < self.upper[n]
-                for n in range(self.num_dim)
+                self.lower[n] <= gauge[n] < self.upper[n] for n in range(self.num_dim)
             ):
                 # Set indices relative to this grid
                 gauge_index = [
@@ -453,9 +439,7 @@ class Grid:
                 os.remove(gauge_file)
             self.gauge_files.append(open(gauge_file, "a"))
 
-    def plot(
-        self, num_ghost=0, mapped=True, mark_nodes=False, mark_centers=False
-    ):
+    def plot(self, num_ghost=0, mapped=True, mark_nodes=False, mark_centers=False):
         r"""Make a plot of the grid.
 
         By default the plot uses the mapping
@@ -473,9 +457,7 @@ class Grid:
                     xe, ye = self.p_nodes_with_ghost(num_ghost)
                 else:
                     xe, ye = self.c_nodes_with_ghost(num_ghost)
-                p = ax.pcolormesh(
-                    xe, ye, 0 * xe, edgecolors="k", cmap="bwr", alpha=0.2
-                )
+                p = ax.pcolormesh(xe, ye, 0 * xe, edgecolors="k", cmap="bwr", alpha=0.2)
                 p.set_clim(-1, 1)
             if mapped:
                 xe, ye = self.p_nodes
@@ -499,15 +481,11 @@ class Grid:
     def _check_validity(self):
         for dim in self.dimensions:
             dim._check_validity()
-        assert (
-            type(self.num_cells) is int
-        ), "Dimension.num_cells must be an integer"
+        assert type(self.num_cells) is int, "Dimension.num_cells must be an integer"
         assert type(self.lower) is float, "Dimension.lower must be a float"
         assert type(self.upper) is float, "Dimension.upper must be a float"
         assert self.num_cells > 0, "Dimension.num_cells must be positive"
-        assert (
-            self.upper > self.lower
-        ), "Dimension.upper must be greater than lower"
+        assert self.upper > self.lower, "Dimension.upper must be greater than lower"
 
     def _clear_cached_values(self):
         self._p_centers = None
@@ -700,15 +678,11 @@ class Dimension:
     def _check_validity(self):
         assert isinstance(
             self.num_cells, int
-        ), "Dimension.num_cells must be an integer; got %s" % type(
-            self.num_cells
-        )
+        ), "Dimension.num_cells must be an integer; got %s" % type(self.num_cells)
         assert isinstance(self.lower, float), "Dimension.lower must be a float"
         assert isinstance(self.upper, float), "Dimension.upper must be a float"
         assert self.num_cells > 0, "Dimension.num_cells must be positive"
-        assert (
-            self.upper > self.lower
-        ), "Dimension.upper must be greater than lower"
+        assert self.upper > self.lower, "Dimension.upper must be greater than lower"
 
 
 # ============================================================================
@@ -762,9 +736,7 @@ class Patch:
         r"""
         Returns a tuple of all dimensions' attribute attr
         """
-        return [
-            getattr(getattr(self, name), attr) for name in self._dimensions
-        ]
+        return [getattr(getattr(self, name), attr) for name in self._dimensions]
 
     def __deepcopy__(self, memo={}):
         import copy
@@ -780,9 +752,7 @@ class Patch:
 
     def __str__(self):
         output = "Patch %s:\n" % self.patch_index
-        output += "\n".join(
-            (str(getattr(self, dim)) for dim in self._dimensions)
-        )
+        output += "\n".join((str(getattr(self, dim)) for dim in self._dimensions))
         return output
 
     # Global properties

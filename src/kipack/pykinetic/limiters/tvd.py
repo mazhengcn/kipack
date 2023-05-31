@@ -24,7 +24,7 @@ def limit(num_eqn, wave, s, limiter, dtdx):
     # wave_norm2 is the sum of the squares along the num_eqn axis,
     # so the norm of the cell i for wave number j is addressed
     # as wave_norm2[i,j]
-    wave_norm2 = np.sum(wave ** 2, axis=0)
+    wave_norm2 = np.sum(wave**2, axis=0)
     wave_zero_mask = np.array((wave_norm2 == 0), dtype=float)
     wave_nonzero_mask = 1.0 - wave_zero_mask
 
@@ -51,8 +51,7 @@ def limit(num_eqn, wave, s, limiter, dtdx):
         if limit_func is not None:
             for m in range(num_eqn):
                 cfl = np.abs(
-                    s[mw, :] * dtdx[1:-2] * spos[mw, :]
-                    + (1 - spos[mw, :]) * dtdx[2:-1]
+                    s[mw, :] * dtdx[1:-2] * spos[mw, :] + (1 - spos[mw, :]) * dtdx[2:-1]
                 )
                 wlimitr = limit_func(r[mw, :], cfl)
                 wave[m, mw, 1:-1] = (
@@ -104,7 +103,7 @@ def van_leer_klein_sharpening_limiter(r, cfl):
     rcorr = np.maximum(a[0], a[1])
     a[1, :] = 1 / rcorr
     sharg = np.minimum(a[0], a[1])
-    sharp = 1.0 + sharg * (1.0 - sharg) * (1.0 - sharg ** 2)
+    sharp = 1.0 + sharg * (1.0 - sharg) * (1.0 - sharg**2)
 
     return (r + np.abs(r)) / (1.0 + np.abs(r)) * sharp
 

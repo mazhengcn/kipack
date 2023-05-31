@@ -47,11 +47,7 @@ def sigma(v, w):
 
 def maxwellian_vec_init(vmesh, u, T, rho):
     v = vmesh.center
-    return (
-        rho[:, None]
-        / np.sqrt(2 * math.pi * T)
-        * np.exp(-((v - u) ** 2) / (2 * T))
-    )
+    return rho[:, None] / np.sqrt(2 * math.pi * T) * np.exp(-((v - u) ** 2) / (2 * T))
 
 
 def qinit(state, vmesh, init_func):
@@ -63,15 +59,11 @@ def qinit(state, vmesh, init_func):
 def compute_rho(state, vmesh):
     vaxis = tuple(-(i + 1) for i in range(vmesh.num_dim))
     v, w = vmesh.center, vmesh.weights
-    return np.sqrt(np.pi) * np.sum(
-        state.q[0, ...] * w * np.exp(v**2), axis=vaxis
-    )
+    return np.sqrt(np.pi) * np.sum(state.q[0, ...] * w * np.exp(v**2), axis=vaxis)
 
 
 class DiffusiveRegimeSolver1D(BoltzmannSolver1D):
-    def __init__(
-        self, riemann_solver, collision_operator, kn, G, seed: int = 42
-    ):
+    def __init__(self, riemann_solver, collision_operator, kn, G, seed: int = 42):
         self.G = self._convert_params(G)
         self.rng = jax.random.PRNGKey(seed)
         super().__init__(
@@ -117,9 +109,7 @@ def run(
     if coll == "linear":
         coll_op = collision.LinearBotlzmannCollision(cfg, vmesh, sigma=sigma)
     elif coll == "rbm":
-        coll_op = collision.RandomBatchLinearBoltzmannCollision(
-            cfg, vmesh, sigma=sigma
-        )
+        coll_op = collision.RandomBatchLinearBoltzmannCollision(cfg, vmesh, sigma=sigma)
     elif coll == "rbm_symm":
         coll_op = collision.SymmetricRBMLinearBoltzmannCollision(
             cfg, vmesh, sigma=sigma
@@ -136,9 +126,7 @@ def run(
 
     # Riemann solver
     rp = pykinetic.riemann.advection_1D
-    solver = DiffusiveRegimeSolver1D(
-        rp, [coll_fn], kn=kn(x.centers), G=G(x.centers)
-    )
+    solver = DiffusiveRegimeSolver1D(rp, [coll_fn], kn=kn(x.centers), G=G(x.centers))
     solver.order = 1
     # solver.lim_type = 2
     # Time integrator

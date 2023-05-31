@@ -67,20 +67,13 @@ class RandomBatchCollisionV1(Collision):
             + f[..., idx_fp_r[0], idx_fp_r[1]] * delta_fp
         )
         # f'_*
-        idx_fp_ast_l, idx_fp_ast_r, delta_fp_ast = self._extrap_boundary(
-            idx["fp_ast"]
-        )
+        idx_fp_ast_l, idx_fp_ast_r, delta_fp_ast = self._extrap_boundary(idx["fp_ast"])
         fp_ast = (
             f[..., idx_fp_ast_l[0], idx_fp_ast_l[1]] * (1 - delta_fp_ast)
             + f[..., idx_fp_ast_r[0], idx_fp_ast_r[1]] * delta_fp_ast
         )
 
-        return (
-            (fp_ast * fp - f_ast * f)
-            / (2 * math.pi)
-            * self.dv ** 2
-            * self.wsigma
-        )
+        return (fp_ast * fp - f_ast * f) / (2 * math.pi) * self.dv**2 * self.wsigma
 
     def perform_precomputation(self):
         pass
