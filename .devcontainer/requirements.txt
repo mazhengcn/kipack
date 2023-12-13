@@ -1,7 +1,0 @@
---find-links https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-absl-py
-jax[cuda12_pip]
-matplotlib
-ml-collections
-numpy
-pyfftw

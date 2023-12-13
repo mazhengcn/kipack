@@ -1,14 +1,20 @@
 {
     "name": "Kipack",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "context": "."
-    },
-    "features": {
-        "ghcr.io/devcontainers/features/common-utils:2": {
-            "username": "jax"
+    "image": "ghcr.io/zyresearch/devcontainers/kipack:latest",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "charliesmarsh.ruff"
+            ]
         }
     },
+    "runArgs": [
+        "--name=kipack",
+        "--gpus=all",
+        "--shm-size=1g"
+    ],
     "mounts": [
         {
             "source": "kipack_data",
@@ -16,22 +22,5 @@
             "type": "volume"
         }
     ],
-    "runArgs": [
-        "--name=kipack",
-        "--gpus=all",
-        "--shm-size=1g"
-    ],
-    "postCreateCommand": "python -m pip install -e .",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-python.python",
-                "ms-python.vscode-pylance",
-                "ms-python.black-formatter",
-                "charliesmarsh.ruff",
-                "ms-toolsai.jupyter"
-            ]
-        }
-    },
-    "remoteUser": "root"
+    "postCreateCommand": "pip install -e ."
 }

@@ -1,8 +1,12 @@
 {
     "[python]": {
         "editor.codeActionsOnSave": {
-            "source.organizeImports": true
+            "source.organizeImports": "explicit"
         },
-        "editor.defaultFormatter": "ms-python.black-formatter",
-    }
+        "editor.defaultFormatter": "charliermarsh.ruff",
+    },
+    "notebook.codeActionsOnSave": {
+        "source.organizeImports": true
+    },
+    "notebook.formatOnSave.enabled": true
 }
