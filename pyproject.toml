@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "absl-py>=2.2.2",
-    "cupy-cuda12x>=13.4.1",
+    "jax[cuda]>=0.5.3",
     "matplotlib>=3.10.1",
     "ml-collections>=1.0.0",
     "numpy>=2.2.4",
@@ -19,4 +19,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = ["clawpack>=5.11.0", "pre-commit>=4.2.0"]
+dev = [
+    "clawpack>=5.11.0",
+ "jupyter>=1.1.1",
+ "pre-commit>=4.2.0",
+]
