@@ -1,12 +1,21 @@
 {
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
     "[python]": {
         "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
             "source.organizeImports": "explicit"
         },
         "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
     },
-    "notebook.codeActionsOnSave": {
-        "source.organizeImports": true
+    "[toml]": {
+        "editor.defaultFormatter": "tamasfe.even-better-toml",
+        "editor.formatOnSave": true,
     },
-    "notebook.formatOnSave.enabled": true
+    "[yaml]": {
+        "editor.autoIndent": "advanced",
+        "editor.defaultFormatter": "redhat.vscode-yaml",
+        "editor.formatOnSave": true,
+    }
 }

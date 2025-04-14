@@ -1,38 +1,22 @@
-[build-system]
-requires = ["setuptools>=61.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "kipack"
 version = "1.0.0"
-description = "A python solver for kinetic equations based on JAX"
+description = "A python-based solver for kinetic equations"
 readme = "README.md"
 requires-python = ">=3.10"
-authors = [{ email = "mazhengcn@outlook.com" }, { name = "Zheng Ma" }]
-license = { text = "Apache License, Version 2.0" }
-classifiers = [
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Topic :: Scientific/Engineering :: Mathematics",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-]
 dependencies = [
-    "absl-py",
-    "jax>=0.4.5",
-    "ml-collections",
-    "numpy",
-    "pyfftw",
+    "absl-py>=2.2.2",
+    "cupy-cuda12x>=13.4.1",
+    "matplotlib>=3.10.1",
+    "ml-collections>=1.0.0",
+    "numpy>=2.2.4",
+    "pyfftw>=0.15.0",
+    "scipy>=1.15.2",
 ]
 
-[project.optional-dependencies]
-examples = ["clawpack"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[project.urls]
-homepage = "https://github.com/mazhengcn/kipack"
-
-[tool.setuptools.packages.find]
-where = ["src"]
+[dependency-groups]
+dev = ["clawpack>=5.11.0", "pre-commit>=4.2.0"]

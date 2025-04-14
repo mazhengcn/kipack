@@ -1,26 +1,31 @@
 {
-    "name": "Kipack",
-    "image": "ghcr.io/zyresearch/devcontainers/kipack:latest",
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-python.python",
-                "ms-python.vscode-pylance",
-                "charliesmarsh.ruff"
-            ]
-        }
-    },
-    "runArgs": [
-        "--name=kipack",
-        "--gpus=all",
-        "--shm-size=1g"
-    ],
-    "mounts": [
-        {
-            "source": "kipack_data",
-            "target": "${containerWorkspaceFolder}/data",
-            "type": "volume"
-        }
-    ],
-    "postCreateCommand": "pip install -e ."
+  "name": "Kipack",
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.tensorboard",
+        "ms-toolsai.jupyter",
+        "charliermarsh.ruff",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml",
+        "yzhang.markdown-all-in-one"
+      ]
+    }
+  },
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-venv,target=${containerWorkspaceFolder}/.venv,type=volume",
+    "source=${localWorkspaceFolderBasename}-data,target=${containerWorkspaceFolder}/data,type=volume"
+  ],
+  "runArgs": [
+    "--gpus=all",
+    "--shm-size=1g"
+  ],
+  "postCreateCommand": "sudo chown vscode .venv && uv sync --frozen",
+  "postStartCommand": "uv run pre-commit install",
+  "remoteUser": "vscode"
 }
