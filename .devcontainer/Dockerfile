@@ -1,15 +1,17 @@
-# [Choice] CUDA and Python version: 11.4-3.9
-ARG VARIANT=3.10-11.5
-FROM zhengma/python-3-cuda:${VARIANT}
+FROM mcr.microsoft.com/devcontainers/base:debian
+# Install system packages
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends screen gfortran \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get install -y --no-install-recommends gfortran \
-    && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ENV UV_LINK_MODE=copy
+# Only use the managed Python version
+ENV UV_PYTHON_PREFERENCE=only-managed
+# Configure the Python directory so it is consistent
+ENV UV_PYTHON_INSTALL_DIR=/python
 
-# [Optional] If your pip requirements rarely change, uncomment this section to add them to the image.
-COPY requirements-dev.txt /tmp/pip-tmp/
-RUN pip3 install -U pip wheel \
-    && pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements-dev.txt \
-    # Install clawpack
-    && pip3 --disable-pip-version-check --no-cache-dir install https://files.pythonhosted.org/packages/e0/8a/51dfbd1b597f79ed59e9b651b31cfa9c7eb75d3e6558652da7eff06bd989/clawpack-5.8.2.tar.gz \
-    && rm -rf /tmp/pip-tmp
+WORKDIR /python
+RUN --mount=type=bind,source=.python-version,target=.python-version \
+    uv python install

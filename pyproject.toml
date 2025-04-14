@@ -1,9 +1,25 @@
+[project]
+name = "kipack"
+version = "1.0.0"
+description = "A python-based solver for kinetic equations"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "absl-py>=2.2.2",
+    "cupy-cuda12x>=13.4.1",
+    "matplotlib>=3.10.1",
+    "ml-collections>=1.0.0",
+    "numpy>=2.2.4",
+    "pyfftw>=0.15.0",
+    "scipy>=1.15.2",
+]
+
 [build-system]
-requires = ["setuptools>=40.9.0", "wheel"]
-build_backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.black]
-line-length = 80
-
-[tool.isort]
-profile = "black"
+[dependency-groups]
+dev = [
+    "clawpack>=5.11.0",
+    "pre-commit>=4.2.0",
+]
